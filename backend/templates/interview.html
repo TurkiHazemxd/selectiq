@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SELECTIQ Junior - Gestion des Entretiens</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/interview.css">
+
+</head>
+<body>
+<nav>
+    <div class="brand">
+        <i class="fas fa-briefcase"></i>
+        <span>SELECTIQ Junior</span>
+    </div>
+    <div class="menu">
+        <a href="dashboard.html"><i class="fas fa-briefcase"></i> Offers</a>
+        <a href="apps.html"><i class="fas fa-file-alt"></i> Apps</a>
+        <a href="candidates.html"><i class="fas fa-users"></i> Candidats</a>
+        <a href="interview.html" class="active"><i class="fas fa-user-clock"></i> Interviews</a>
+        <a href="#"><i class="fas fa-th-large"></i> Dashboard</a>
+        <a href="#"><i class="fas fa-envelope"></i> Mail</a>
+    </div>
+
+    <div class="profile-container">
+        <button class="profile-btn" onclick="toggleProfileDropdown()">
+            <img src="../static/assets/icon.jpg" alt="Profile" class="profile-img">
+            <i class="fas fa-caret-down"></i>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+            <a href="#" onclick="openModal('profile-modal')"><i class="fas fa-user"></i> My Profile</a>
+            <a href="login.html"><i class="fas fa-sign-out-alt"></i> Disconnect</a>
+        </div>
+    </div>
+</nav>
+
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">Entretiens Planifiés</h1>
+        
+        <button class="add-btn" onclick="openInterviewModal()">
+            <i class="fas fa-plus"></i> Add Interview
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Candidat</th>
+                <th>Date & Heure</th>
+                <th>Interviewer</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="interviewsTableBody">
+            <tr>
+                <td colspan="6">
+                    <div class="empty-table-message">
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>Aucun entretien planifié</p>
+                        <small>Cliquez sur "Nouvel Entretien" pour planifier votre premier entretien</small>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<footer style=" color: #e2e8f0; text-align: center; padding: 1rem; font-size: 0.9rem; border-top: 1px solid #475569;">
+  <p style="margin: 0;">
+    © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved 
+    <a href="login.html" class="admin-link" style="color: #93c5fd; text-decoration: none; margin-left: 8px;">
+      
+    </a>
+  </p>
+</footer>
+
+<!-- Modal Add/Edit Interview -->
+<div id="interviewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle" style="text-align: center;">Planifier un Nouvel Entretien</h3>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="interviewForm">
+                <input type="hidden" id="interviewId">
+                
+                <div class="form-group">
+                    <input type="text" id="candidateName" class="form-input" placeholder="Entrez le nom du candidat" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="date" id="interviewDate" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="time" id="interviewTime" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="text" id="interviewerName" class="form-input" placeholder="Entrez le nom de l'interviewer" required>
+                </div>
+                
+                <div class="form-group">
+                    <select id="interviewType" class="form-select" required>
+                        <option value="">Sélectionnez un type</option>
+                        <option value="Online">Online</option>
+                        <option value="In Person">In Person</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <select id="interviewStatus" class="form-select" required>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Refused">Refused</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Planifier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="profile-modal" id="profile-modal">
+    <div>
+        <div class="modals-header">
+            <h2><i class="fas fa-user"></i> My Profile</h2>
+            <button class="close-modals" onclick="closeModals('profile-modal')">&times;</button>
+        </div>
+        <div class="profile-info">
+            <img src="../static/assets/icon.jpg" alt="Profile" class="profile-pic-large">
+            <div class="profile-details">
+                <h3>Admin User</h3>
+                <p><i class="fas fa-envelope"></i> selectiqad@gmail.com</p>
+                <p><i class="fas fa-user-tag"></i> Senior Administrator</p>
+                <p><i class="fas fa-calendar-alt"></i> Member since: 08/15/2025</p>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <button class="apply-btn" onclick="closeModals('profile-modal')">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmationModal" class="confirmation-modal">
+    <div class="confirmation-content">
+        <p>Are you sure you want to delete this interview?</p>
+        <div class="confirmation-buttons">
+            <button class="btndanger btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btndanger btn-danger" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Comment Modal -->
+<div id="commentModal" class="comment-modal">
+    <div class="comment-modal-content">
+        <div class="comment-modal-header">
+            <h3>Comments for <span id="commentCandidateName"></span></h3>
+            <span class="close-modal" onclick="closeCommentModal()">&times;</span>
+        </div>
+        <div class="comment-modal-body">
+            <div class="comment-list" id="commentList">
+                <!-- Comments will be loaded here -->
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="newComment">Add a comment:</label>
+                <textarea id="newComment" class="form-textarea" placeholder="Enter your comment here..."></textarea>
+            </div>
+            
+            <div class="form-actions">
+                
+                <button type="button" class="btn btn-primary" onclick="saveComment()">Save Comment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store comments in memory (in a real app, this would be in a database)
+    const interviewComments = {};
+    
+    // Profile dropdown
+    function toggleProfileDropdown() {
+        document.getElementById('profileDropdown').classList.toggle('show');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.profile-btn') && !event.target.closest('.profile-dropdown')) {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+        
+        // Close dropdown menus when clicking outside
+        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+            if (!event.target.closest('.menu-container')) {
+                menu.classList.remove('show');
+            }
+        });
+    };
+
+    // Modal functions
+    const modal = document.getElementById('interviewModal');
+    function openInterviewModal(id = null) {
+        modal.style.display = 'block';
+        document.getElementById('modalTitle').textContent = id ? 'Modifier l\'Entretien' : 'Planifier un Nouvel Entretien';
+        document.getElementById('modalSubmitBtn').textContent = id ? 'Modifier' : 'Planifier';
+
+        if (id) {
+            // Fetch interview data from API
+            fetch(`/api/interviews/${id}`)
+                .then(response => response.json())
+                .then(interview => {
+                    document.getElementById('interviewId').value = interview.id;
+                    document.getElementById('candidateName').value = interview.candidate_name;
+                    document.getElementById('interviewDate').value = interview.interview_date;
+                    document.getElementById('interviewTime').value = interview.interview_time;
+                    document.getElementById('interviewerName').value = interview.interviewer;
+                    document.getElementById('interviewType').value = interview.interview_type;
+                    document.getElementById('interviewStatus').value = interview.status;
+                })
+                .catch(error => {
+                    console.error('Error fetching interview:', error);
+                    alert('Erreur lors du chargement de l\'entretien');
+                });
+        } else {
+            document.getElementById('interviewForm').reset();
+            document.getElementById('interviewId').value = '';
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) closeModal();
+        if (event.target == document.getElementById('deleteConfirmationModal')) closeDeleteModal();
+        if (event.target == document.getElementById('commentModal')) closeCommentModal();
+    };
+
+    // Toggle dropdown menu
+    function toggleMenu(button, event) {
+        event.stopPropagation(); // Prevent the click from bubbling up
+        
+        const menu = button.nextElementSibling;
+        const isShowing = menu.classList.contains('show');
+        
+        // Close all other menus
+        document.querySelectorAll('.dropdown-menu.show').forEach(m => {
+            if (m !== menu) m.classList.remove('show');
+        });
+        
+        // Toggle this menu
+        menu.classList.toggle('show');
+        
+        // Position the menu near the button
+        if (menu.classList.contains('show')) {
+            const rect = button.getBoundingClientRect();
+            menu.style.top = `${rect.bottom + window.scrollY}px`;
+            menu.style.left = `${rect.left + window.scrollX}px`;
+        }
+        
+        return false;
+    }
+
+    // Add event listener to close menus when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.menu-container') && !event.target.closest('.dropdown-menu')) {
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        }
+    });
+
+    // Render table
+    function renderInterviewsTable() {
+        const tbody = document.getElementById('interviewsTableBody');
+        tbody.innerHTML = '';
+
+        // Show loading state
+        tbody.innerHTML = `<tr>
+            <td colspan="6" style="text-align: center; padding: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> Chargement des entretiens...
+            </td>
+        </tr>`;
+        
+        // Fetch interviews from API
+        
+        fetch('/api/interviews')
+            .then(response => {
+                
+                if (!response.ok) {
+                    console.error('API response not OK:', response.status);
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(interviews => {
+                // Clear loading state
+                tbody.innerHTML = '';
+
+                if (!interviews || interviews.length === 0) {
+                    showEmptyTable();
+                    return;
+                }
+
+                interviews.forEach(interview => {
+                    // Handle potential missing data
+                    const candidateName = interview.candidate_name || 'Unknown';
+                    const interviewDate = interview.interview_date || '';
+                    const interviewTime = interview.interview_time || '';
+                    const interviewer = interview.interviewer || 'Unknown';
+                    const interviewType = interview.interview_type || 'Unknown';
+                    const status = interview.status || 'Scheduled';
+                    
+                    tbody.innerHTML += `<tr>
+                        <td>${candidateName}</td>
+                        <td>${interviewDate} ${interviewTime}</td>
+                        <td>${interviewer}</td>
+                        <td>${interviewType}</td>
+                        <td><span class="status-${status}">${status}</span></td>
+                        <td>
+                            <div class="menu-container">
+                                <button class="menu-toggle" onclick="toggleMenu(this, event)">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-item" onclick="openInterviewModal(${interview.id})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </div>
+                                    <div class="dropdown-item" onclick="confirmDelete(${interview.id})">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </div>
+                                    <div class="dropdown-item" onclick="updateStatus(${interview.id}, 'Accepted')">
+                                        <i class="fas fa-check"></i> Accept
+                                    </div>
+                                    <div class="dropdown-item" onclick="updateStatus(${interview.id}, 'Refused')">
+                                        <i class="fas fa-times"></i> Refuse
+                                    </div>
+                                    <div class="dropdown-item" onclick="openCommentModal(${interview.id}, '${candidateName}')">
+                                        <i class="fas fa-comment"></i> View Comment
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching interviews:', error);
+                showEmptyTable();
+            });
+    }
+
+    function showEmptyTable() {
+        const tbody = document.getElementById('interviewsTableBody');
+        tbody.innerHTML = `<tr>
+            <td colspan="6">
+                <div class="empty-table-message">
+                    <i class="fas fa-calendar-plus"></i>
+                    <p>No interview scheduled.</p>
+                    <small>Click on 'New Interview' to schedule your first interview.</small>
+                </div>
+            </td>
+        </tr>`;
+    }
+
+    // Form submit
+    document.getElementById('interviewForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('interviewId').value;
+        const candidateName = document.getElementById('candidateName').value;
+        const interviewDate = document.getElementById('interviewDate').value;
+        const interviewTime = document.getElementById('interviewTime').value;
+        const interviewerName = document.getElementById('interviewerName').value;
+        const interviewType = document.getElementById('interviewType').value;
+        const interviewStatus = document.getElementById('interviewStatus').value;
+
+        const interviewData = {
+            candidate_name: candidateName,
+            interview_date: interviewDate,
+            interview_time: interviewTime,
+            interviewer: interviewerName,
+            interview_type: interviewType,
+            status: interviewStatus
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/interviews/${id}` : '/api/interviews';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(interviewData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erreur: ' + data.error);
+                return;
+            }
+            renderInterviewsTable();
+            closeModal();
+        })
+        .catch(error => {
+            console.error('Error saving interview:', error);
+            alert('Erreur lors de la sauvegarde');
+        });
+    });
+
+    // Delete Confirmation
+    let deleteId = null;
+    function confirmDelete(id) {
+        deleteId = id;
+        document.getElementById('deleteConfirmationModal').style.display = 'block';
+        
+        // Close any open dropdown menus
+        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+
+    function closeDeleteModal() {
+        deleteId = null;
+        document.getElementById('deleteConfirmationModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (deleteId) {
+            fetch(`/api/interviews/${deleteId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Erreur: ' + data.error);
+                    return;
+                }
+                renderInterviewsTable();
+                closeDeleteModal();
+            })
+            .catch(error => {
+                console.error('Error deleting interview:', error);
+                alert('Erreur lors de la suppression');
+            });
+        }
+    });
+
+    // Update Status function
+    function updateStatus(id, status) {
+        fetch(`/api/interviews/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erreur: ' + data.error);
+                return;
+            }
+            renderInterviewsTable();
+            
+            // Close any open dropdown menus
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        })
+        .catch(error => {
+            console.error('Error updating status:', error);
+            alert('Erreur lors de la mise à jour');
+        });
+    }
+
+    // Replace the entire comment section in your JavaScript
+
+// Comment Modal functions
+let currentInterviewId = null;
+
+function openCommentModal(id, candidateName) {
+    currentInterviewId = id;
+    document.getElementById('commentCandidateName').textContent = candidateName;
+    document.getElementById('commentModal').style.display = 'block';
+    document.getElementById('newComment').value = '';
+    
+    // Load existing comments from API
+    loadComments(id);
+    
+    // Close any open dropdown menus
+    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+    });
+}
+
+function closeCommentModal() {
+    document.getElementById('commentModal').style.display = 'none';
+    currentInterviewId = null;
+}
+
+function loadComments(interviewId) {
+    const commentList = document.getElementById('commentList');
+    
+    // Show loading state
+    commentList.innerHTML = '<div class="comment-item"><div class="comment-text">Loading comments...</div></div>';
+    
+    // Fetch comments from API
+    fetch(`/api/interviews/${interviewId}/comments`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            commentList.innerHTML = '';
+            
+            if (data.error) {
+                commentList.innerHTML = `<div class="comment-item"><div class="comment-text">Error: ${data.error}</div></div>`;
+                return;
+            }
+            
+            const comments = data.comments || [];
+            
+            if (comments.length === 0 || (comments.length === 1 && !comments[0])) {
+                commentList.innerHTML = '<div class="comment-item"><div class="comment-text">No comments yet.</div></div>';
+                return;
+            }
+            
+            // Display each comment with delete button
+            comments.forEach((comment, index) => {
+                if (comment && comment.trim() !== '') {
+                    const commentItem = document.createElement('div');
+                    commentItem.className = 'comment-item';
+                    
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'comment-text';
+                    textDiv.textContent = comment;
+                    
+                    // Add delete button
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-comment-btn';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteBtn.title = 'Delete comment';
+                    deleteBtn.onclick = () => deleteComment(interviewId, index);
+                    
+                    commentItem.appendChild(textDiv);
+                    commentItem.appendChild(deleteBtn);
+                    commentList.appendChild(commentItem);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading comments:', error);
+            commentList.innerHTML = '<div class="comment-item"><div class="comment-text">Error loading comments.</div></div>';
+        });
+}
+
+async function deleteComment(interviewId, commentIndex) {
+    const confirmed = await showConfirmation('Are you sure you want to delete this comment?');
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    fetch(`/api/interviews/${interviewId}/comments/${commentIndex}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            showToast('Error: ' + data.error, 'error');
+            return;
+        }
+        
+        showToast('Comment deleted successfully!');
+        
+        // Reload comments to reflect the deletion
+        loadComments(interviewId);
+    })
+    .catch(error => {
+        console.error('Error deleting comment:', error);
+        showToast('Error deleting comment', 'error');
+    });
+}
+
+function saveComment() {
+    const commentText = document.getElementById('newComment').value.trim();
+    
+    if (!commentText) {
+        showToast('Please enter a comment', 'warning');
+        return;
+    }
+    
+    if (!currentInterviewId) {
+        showToast('No interview selected', 'error');
+        return;
+    }
+    
+    // Send comment to API
+    fetch(`/api/interviews/${currentInterviewId}/comments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            comment: commentText
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            showToast('Error: ' + data.error, 'error');
+            return;
+        }
+        
+        // Clear the textarea
+        document.getElementById('newComment').value = '';
+        
+        // Show success message
+        showToast('Comment added successfully!');
+        
+        // Reload comments to show the new one
+        loadComments(currentInterviewId);
+    })
+    .catch(error => {
+        console.error('Error saving comment:', error);
+        showToast('Error saving comment', 'error');
+    });
+}
+// Toast notification functions
+function showToast(message, type = 'success') {
+    // Remove any existing toast
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Hide toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Confirmation dialog function
+function showConfirmation(message) {
+    return new Promise((resolve) => {
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'confirmation-overlay';
+        
+        // Create dialog
+        const dialog = document.createElement('div');
+        dialog.className = 'confirmation-dialog';
+        dialog.innerHTML = `
+            <h3>${message}</h3>
+            <div class="confirmation-buttons">
+                <button class="btn btn-secondary" id="confirmCancel">Cancel</button>
+                <button class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        document.body.appendChild(dialog);
+        
+        // Add event listeners
+        document.getElementById('confirmCancel').addEventListener('click', () => {
+            cleanup();
+            resolve(false);
+        });
+        
+        document.getElementById('confirmDelete').addEventListener('click', () => {
+            cleanup();
+            resolve(true);
+        });
+        
+        function cleanup() {
+            overlay.remove();
+            dialog.remove();
+        }
+    });
+}
+
+    // Function to open modal
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+        document.getElementById('profileDropdown').classList.remove('show');
+        return false;
+    }
+    
+    // Function to close modal
+    function closeModals(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        return false;
+    }
+    
+    // Initial render
+    renderInterviewsTable();
+</script>
+</body>
+</html>

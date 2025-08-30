@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SELECTIQ Junior - Candidats</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" type="text/css" href="../static/css/apps.css" />
+  <style>
+    /* Notification animation */
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    #appNotification {
+      animation: slideIn 0.3s ease;
+    }
+    
+    /* Highlight for newly imported applications */
+    tr.auto-imported {
+      background-color: rgba(59, 130, 246, 0.1) !important;
+    }
+    
+    tr.auto-imported:hover {
+      background-color: rgba(59, 130, 246, 0.2) !important;
+    }
+    
+    .import-status {
+      font-size: 0.8em;
+      color: #10b981;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="brand">
+      <i class="fas fa-briefcase"></i>
+      <span>SELECTIQ Junior</span>
+    </div>
+    <div class="menu">
+      <a href="dashboard.html"><i class="fas fa-briefcase"></i> Offers</a>
+      <a href="apps.html" class="active"><i class="fas fa-file-alt"></i> Apps</a>
+      <a href="candidates.html"><i class="fas fa-users"></i> Candidats</a>
+      <a href="interview.html"><i class="fas fa-user-clock"></i> Interviews</a>
+      <a href="#"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="#"><i class="fas fa-envelope"></i> Mail</a>
+    </div>
+
+    <div class="profile-container">
+      <button class="profile-btn" onclick="toggleProfileDropdown()">
+        <img src="../static/assets/icon.jpg" alt="Profile" class="profile-img" />
+        <i class="fas fa-caret-down"></i>
+      </button>
+      <div class="profile-dropdown" id="profileDropdown">
+        <a href="#" onclick="openModal('profile-modal')"><i class="fas fa-user"></i> My Profile</a>
+        <a href="login.html" onclick="logout(event)"><i class="fas fa-sign-out-alt"></i> Disconnect</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="table-header">
+      <h2 class="table-title">Applications</h2>
+      <div class="table-controls">
+        <input type="text" class="search-box" placeholder="Search candidates..." id="searchInput" />
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="interview">Interview</option>
+          <option value="rejected">Rejected</option>
+          <option value="accepted">Accepted</option>
+        </select>
+        <button class="apply-btn" onclick="syncWithDatabase()">
+          <i class="fas fa-sync-alt"></i> Sync Data
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Hour</th>
+            <th>Full Name</th>
+            <th>Mail</th>
+            <th>JobOffer</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="applicationsTableBody">
+          <!-- Data will be loaded here dynamically -->
+          <tr>
+            <td colspan="7" style="text-align: center;">
+              <i class="fas fa-spinner fa-spin"></i> Loading applications...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="pagination-container">
+      <div class="pagination-info" id="paginationInfo">Loading...</div>
+      <div class="pagination-controls">
+        <span class="pagination-stats" id="pageStats">10 per page</span>
+        <div class="pagination-buttons" id="paginationButtons">
+          <button class="pagination-btn" id="prevPageBtn" disabled onclick="changePage(currentPage - 1)">←</button>
+          <button class="pagination-btn active" onclick="changePage(1)">1</button>
+          <button class="pagination-btn" id="nextPageBtn" disabled onclick="changePage(currentPage + 1)">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <br />
+
+  <!-- View More Modal -->
+  <div id="viewMoreModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Candidat Details</h3>
+        <span class="close-modal" onclick="closeModal('viewMoreModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>Full Name:</label>
+          <span id="modal-fullname"></span>
+        </div>
+        <div class="modal-field">
+          <label>Email:</label>
+          <span id="modal-email"></span>
+        </div>
+        <div class="modal-field">
+          <label>Job Title:</label>
+          <span id="modal-jobtitle"></span>
+        </div>
+        <div class="modal-field">
+          <label>Education level:</label>
+          <span id="modal-education"></span>
+        </div>
+        <div class="modal-field">
+          <label>Application Date:</label>
+          <span id="modal-date"></span>
+        </div>
+        <div class="modal-field">
+          <label>Status:</label>
+          <span id="modal-status"></span>
+        </div>
+        <div class="modal-field">
+          <label>CV:</label>
+          <a href="#" id="modal-cvlink" target="_blank">View CV</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Profile Modal -->
+  <div class="profile-modal" id="profile-modal">
+    <div>
+      <div class="modal-header">
+        <h2><i class="fas fa-user"></i> Mon Profil</h2>
+        <button class="close-modal" onclick="closeModal('profile-modal')">&times;</button>
+      </div>
+      <div class="profile-info">
+        <img src="../static/assets/icon.jpg" alt="Profile" class="profile-pic-large">
+        <div class="profile-details">
+          <h3>Admin User</h3>
+          <p><i class="fas fa-envelope"></i> selectiqad@gmail.com</p>
+          <p><i class="fas fa-user-tag"></i> Senior Administrator</p>
+          <p><i class="fas fa-calendar-alt"></i> Member since: 08/15/2025</p>
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <button class="apply-btn" onclick="closeModal('profile-modal')">
+          <i class="fas fa-times"></i> Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer style="color: #e2e8f0; text-align: center; padding: 1rem; font-size: 0.9rem; border-top: 1px solid #475569;">
+    <p style="margin: 0">
+      © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved
+    </p>
+  </footer>
+  
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script>
+    // Global variables
+    let applicationsData = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let filteredData = [];
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      addStatusStyles();
+      initEventListeners();
+      loadApplications();
+    });
+
+    // Add status styles to the page
+    function addStatusStyles() {
+      const style = document.createElement('style');
+      style.textContent = `
+        .status-pending { background-color: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-reviewed { background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-interview { background-color: #8b5cf6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-rejected { background-color: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-accepted { background-color: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Initialize event listeners
+    function initEventListeners() {
+      const searchInput = document.getElementById('searchInput');
+      const statusFilter = document.getElementById('statusFilter');
+      
+      if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
+      }
+      
+      if (statusFilter) {
+        statusFilter.addEventListener('change', handleFilter);
+      }
+    }
+
+    // Handle search input
+    function handleSearch() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      filterApplications(searchTerm, document.getElementById('statusFilter').value);
+    }
+
+    // Handle status filter
+    function handleFilter() {
+      const status = document.getElementById('statusFilter').value;
+      filterApplications(document.getElementById('searchInput').value.toLowerCase(), status);
+    }
+
+    // Filter applications based on search term and status
+    function filterApplications(searchTerm, status) {
+      filteredData = applicationsData.filter(app => {
+        const matchesSearch = 
+          app.full_name.toLowerCase().includes(searchTerm) ||
+          app.email.toLowerCase().includes(searchTerm) ||
+          app.job_title.toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = status === '' || app.status === status;
+        
+        return matchesSearch && matchesStatus;
+      });
+      
+      currentPage = 1;
+      renderApplications(filteredData);
+    }
+
+    // Load applications from the database
+    async function loadApplications() {
+      try {
+        showLoadingState(true);
+        
+        // Try to load from the database first
+        try {
+          applicationsData = await ApiService.getApplications();
+          console.log('Loaded applications from database:', applicationsData.length);
+          
+          // If no applications in database, try to import from Google Sheets
+          if (applicationsData.length === 0) {
+            await importFromGoogleSheets();
+          } else {
+            filteredData = [...applicationsData];
+            renderApplications(filteredData);
+          }
+        } catch (error) {
+          console.error('Error loading from database:', error);
+          // Fallback to Google Sheets if database is unavailable
+          await importFromGoogleSheets();
+        }
+      } catch (error) {
+        console.error('Error loading applications:', error);
+        showErrorState('Failed to load applications. Please try again.');
+      } finally {
+        showLoadingState(false);
+      }
+    }
+
+    // Import applications from Google Sheets
+    async function importFromGoogleSheets() {
+      try {
+        showNotification('Importing data from Google Sheets...', 'info');
+        
+        const response = await fetch('https://script.google.com/macros/s/AKfycbyhxQy8d-VskbwNoNBnBFcGGXRFU8iYo3thXoBB338mKgE6R2p3eTLmEMKdM-FqDbD7Gg/exec');
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) {
+          throw new Error('Expected array of applications');
+        }
+        
+        // Process and save applications to database
+        for (const app of data) {
+          try {
+            const applicationData = {
+              full_name: app.fullName || 'N/A',
+              email: app.email || 'N/A',
+              job_title: app.jobTitle || 'N/A',
+              education_level: app.educationLevel || 'Non spécifié',
+              cv_url: app.pdfUrl || '#',
+              status: app.status || 'pending'
+            };
+            
+            // Save to database
+            await ApiService.createApplication(applicationData);
+          } catch (error) {
+            console.error('Error saving application:', error);
+          }
+        }
+        
+        // Reload from database
+        applicationsData = await ApiService.getApplications();
+        filteredData = [...applicationsData];
+        renderApplications(filteredData);
+        
+        showNotification('Data imported successfully!', 'success');
+      } catch (error) {
+        console.error('Error importing from Google Sheets:', error);
+        showErrorState('Failed to import data. Please try again later.');
+      }
+    }
+
+    // Manual sync with database
+    async function syncWithDatabase() {
+      await loadApplications();
+    }
+
+    // Show loading state
+    function showLoadingState(show) {
+      const tbody = document.getElementById('applicationsTableBody');
+      if (!tbody) return;
+
+      if (show) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+      }
+    }
+
+    // Show error state
+    function showErrorState(message) {
+      const tbody = document.getElementById('applicationsTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center;color:#ef4444;">
+            ${message}
+            <button onclick="loadApplications()" style="
+              background: #3b82f6;
+              color: white;
+              border: none;
+              padding: 5px 10px;
+              border-radius: 4px;
+              margin-top: 5px;
+              cursor: pointer;
+            ">Try Again</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Render applications in table
+    function renderApplications(data) {
+      const tbody = document.getElementById('applicationsTableBody');
+      if (!tbody) return;
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No applications found</td></tr>';
+        updatePagination(0);
+        return;
+      }
+
+      // Apply pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedData = data.slice(startIndex, endIndex);
+
+      tbody.innerHTML = paginatedData.map(app => `
+        <tr>
+          <td>${formatDate(app.created_at)}</td>
+          <td>${formatTime(app.created_at)}</td>
+          <td>${app.full_name}</td>
+          <td>${app.email}</td>
+          <td>${app.job_title}</td>
+          <td>
+            <span class="status-${app.status}">${getStatusText(app.status)}</span>
+          </td>
+          <td>
+            <div class="dropdown">
+              <i class="fas fa-ellipsis-v three-dots"></i>
+              <div class="dropdown-content">
+                <a href="#" onclick="viewApplicationDetails(${app.id}); return false;">View Details</a>
+                <a href="${app.cv_url}" target="_blank">View CV</a>
+                <a href="#" onclick="updateApplicationStatus(${app.id}, 'interview'); return false;">Mark for Interview</a>
+                <a href="#" onclick="deleteApplication(${app.id}, '${app.full_name}'); return false;" style="color: #ef4444;">
+                  <i class="fas fa-trash"></i> Delete
+                </a>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      initDropdowns();
+      updatePagination(data.length);
+    }
+
+    // Format date
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      try {
+        const date = new Date(dateString);
+        return isNaN(date) ? 'N/A' : date.toLocaleDateString('fr-FR');
+      } catch {
+        return 'N/A';
+      }
+    }
+
+    // Format time
+    function formatTime(dateString) {
+      if (!dateString) return 'N/A';
+      try {
+        const date = new Date(dateString);
+        return isNaN(date) ? 'N/A' : date.toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch {
+        return 'N/A';
+      }
+    }
+
+    // Get status text
+    function getStatusText(status) {
+      const statusMap = {
+        pending: 'Pending',
+        reviewed: 'Reviewed',
+        interview: 'Interview',
+        rejected: 'Rejected',
+        accepted: 'Accepted'
+      };
+      return statusMap[status] || status;
+    }
+
+    // Initialize dropdown menus
+    function initDropdowns() {
+      document.querySelectorAll('.three-dots').forEach(dot => {
+        dot.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const dropdown = this.nextElementSibling;
+          dropdown.classList.toggle('show');
+          document.querySelectorAll('.dropdown-content').forEach(d => {
+            if (d !== dropdown) d.classList.remove('show');
+          });
+        });
+      });
+
+      window.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-content').forEach(d => {
+          d.classList.remove('show');
+        });
+      });
+    }
+
+    // Update pagination
+    function updatePagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const paginationInfo = document.getElementById('paginationInfo');
+      const prevPageBtn = document.getElementById('prevPageBtn');
+      const nextPageBtn = document.getElementById('nextPageBtn');
+
+      const startItem = (currentPage - 1) * itemsPerPage + 1;
+      const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+      
+      if (paginationInfo) {
+        paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${totalItems} applications`;
+      }
+
+      if (prevPageBtn) {
+        prevPageBtn.disabled = currentPage === 1;
+      }
+      
+      if (nextPageBtn) {
+        nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+      }
+
+      const buttons = document.querySelectorAll('.pagination-buttons button');
+      buttons.forEach(btn => {
+        if (btn.id !== 'prevPageBtn' && btn.id !== 'nextPageBtn') {
+          btn.remove();
+        }
+      });
+
+      const paginationButtons = document.getElementById('paginationButtons');
+      if (paginationButtons) {
+        for (let i = 1; i <= totalPages; i++) {
+          const pageBtn = document.createElement('button');
+          pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+          pageBtn.textContent = i;
+          pageBtn.onclick = () => changePage(i);
+          nextPageBtn.parentNode.insertBefore(pageBtn, nextPageBtn);
+        }
+      }
+    }
+
+    // Change page
+    function changePage(page) {
+      currentPage = page;
+      renderApplications(filteredData);
+    }
+
+    // View application details
+    async function viewApplicationDetails(appId) {
+      try {
+        // In a real application, you would fetch the full application details from the API
+        const app = applicationsData.find(a => a.id === appId);
+        if (app) {
+          document.getElementById('modal-fullname').textContent = app.full_name;
+          document.getElementById('modal-email').textContent = app.email;
+          document.getElementById('modal-jobtitle').textContent = app.job_title;
+          document.getElementById('modal-education').textContent = app.education_level || 'Not specified';
+          document.getElementById('modal-date').textContent = formatDate(app.created_at);
+          document.getElementById('modal-status').textContent = getStatusText(app.status);
+          document.getElementById('modal-cvlink').href = app.cv_url || '#';
+          
+          document.getElementById('viewMoreModal').style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error viewing application details:', error);
+        showNotification('Error loading application details', 'error');
+      }
+    }
+
+    // Update application status
+    async function updateApplicationStatus(appId, newStatus) {
+      try {
+        await ApiService.updateApplication(appId, { status: newStatus });
+        
+        // Update local data
+        const appIndex = applicationsData.findIndex(app => app.id === appId);
+        if (appIndex !== -1) {
+          applicationsData[appIndex].status = newStatus;
+        }
+        
+        // Update filtered data
+        const filteredAppIndex = filteredData.findIndex(app => app.id === appId);
+        if (filteredAppIndex !== -1) {
+          filteredData[filteredAppIndex].status = newStatus;
+        }
+        
+        renderApplications(filteredData);
+        showNotification('Application status updated successfully!', 'success');
+      } catch (error) {
+        console.error('Error updating application status:', error);
+        showNotification('Error updating application status', 'error');
+      }
+    }
+
+    // Delete application
+    async function deleteApplication(appId, fullName) {
+      if (!confirm(`Are you sure you want to delete the application from ${fullName}?`)) {
+        return;
+      }
+
+      try {
+        await ApiService.deleteApplication(appId);
+        
+        // Remove from local data
+        applicationsData = applicationsData.filter(app => app.id !== appId);
+        filteredData = filteredData.filter(app => app.id !== appId);
+        
+        renderApplications(filteredData);
+        showNotification('Application deleted successfully!', 'success');
+      } catch (error) {
+        console.error('Error deleting application:', error);
+        showNotification('Error deleting application', 'error');
+      }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+      // Remove any existing notification
+      const existingNotification = document.getElementById('appNotification');
+      if (existingNotification) {
+        existingNotification.remove();
+      }
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.id = 'appNotification';
+      notification.style = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 6px;
+        color: white;
+        z-index: 10000;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background-color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      `;
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 3000);
+    }
+
+    // Toggle profile dropdown
+    function toggleProfileDropdown() {
+      const dropdown = document.getElementById('profileDropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    // Open modal
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+      document.getElementById('profileDropdown').classList.remove('show');
+    }
+
+    // Close modal
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('viewMoreModal');
+      if (event.target === modal) {
+        closeModal('viewMoreModal');
+      }
+      
+      const profileModal = document.getElementById('profile-modal');
+      if (event.target === profileModal) {
+        closeModal('profile-modal');
+      }
+    };
+
+    // Logout function
+    function logout(event) {
+      event.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        ApiService.logout().then(() => {
+          window.location.href = 'login.html';
+        }).catch(error => {
+          console.error('Logout error:', error);
+          window.location.href = 'login.html';
+        });
+      }
+    }
+  </script>
+</body>
+</html>

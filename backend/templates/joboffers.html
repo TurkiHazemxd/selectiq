@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SELECTIQ Junior - Offres d'Emploi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" type="text/css" href="../static/css/joboffers.css">
+
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="brand">
+      <i class="fas fa-briefcase"></i>
+      <h1>SELECTIQ Junior</h1>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Job Cards Container -->
+    <!-- Job Cards Container -->
+<div class="big-card" id="jobOffersContainer">
+    <div class="loading" id="loadingState">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des offres...</p>
+    </div>
+</div>
+  </div>
+
+
+  <!-- Footer -->
+   <footer style="background: #1e293b; color: #e2e8f0; text-align: center; padding: 1rem; font-size: 0.9rem; border-top: 1px solid #475569;">
+  <p style="margin: 0;">
+    © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved 
+    <a href="login.html" class="admin-link" style="color: #93c5fd; text-decoration: none; margin-left: 8px;">
+      Admin
+    </a>
+  </p>
+</footer>
+
+  <!-- Particles Container -->
+  <div class="particles-container" id="particles"></div>
+<!-- Offer Modal -->
+<div id="offerModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center;">
+    <div class="modal-content">
+        <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeOfferModal()">&times;</span>
+        <div class="modal-section">
+            <strong>Offer Title:</strong>
+            <div id="modal-title"></div>
+        </div>
+        <br>
+        <div class="modal-section">
+            <strong>Description:</strong>
+            <div id="modal-description"></div>
+        </div>
+    </div>
+</div>
+
+
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script>
+    function openOfferModal(title, description) {
+    document.getElementById('modal-title').textContent = title;
+    
+    document.getElementById('modal-description').textContent = description;
+    document.getElementById('offerModal').style.display = 'flex';
+}
+
+function closeOfferModal() {
+    document.getElementById('offerModal').style.display = 'none';
+}
+
+// Close modal when clicking outside content
+window.onclick = function(event) {
+    const modal = document.getElementById('offerModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+}
+
+
+    // API service fallback
+if (typeof ApiService === 'undefined') {
+    console.log('ApiService not loaded, creating fallback...');
+    window.ApiService = {
+        getJobOffers: async function() {
+            try {
+                const response = await fetch('/api/job-offers');
+                return await response.json();
+            } catch (error) {
+                console.error('API failed, using localStorage');
+                return JSON.parse(localStorage.getItem('jobOffers') || '[]');
+            }
+        },
+        createApplication: async function(application) {
+            try {
+                const response = await fetch('/api/applications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(application)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('API failed, saving to localStorage');
+                // Save to localStorage as fallback
+                const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+                applications.push({
+                    ...application,
+                    id: Date.now().toString(),
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('jobApplications', JSON.stringify(applications));
+                return { success: true, message: 'Saved locally' };
+            }
+        }
+    };
+}
+
+// Function to render job offers
+async function renderOffers() {
+    const container = document.querySelector('.big-card');
+    const loadingState = document.getElementById('loadingState');
+    
+    // Show loading state
+    if (loadingState) {
+        loadingState.style.display = 'block';
+    }
+    
+    try {
+        // Load offers from API
+        const offers = await ApiService.getJobOffers();
+        console.log('Offers loaded:', offers.length);
+        
+        // Hide loading state
+        if (loadingState) {
+            loadingState.style.display = 'none';
+        }
+        
+        // Clear existing cards
+        container.innerHTML = '';
+        
+        if (offers.length === 0) {
+            container.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Aucune offre disponible</h3>
+                    <p>Revenez plus tard pour découvrir de nouvelles opportunités.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Render each offer
+        offers.forEach(offer => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <h3>${offer.title}</h3>
+                <div class="job-meta">
+                    <span><i class="fas fa-building"></i> ${offer.company}</span>
+                    
+                </div>
+                <p>
+  ${offer.description.substring(0, 70)}...
+  <a href="#" onclick="openOfferModal('${offer.title.replace(/'/g, "\\'")}', \`${offer.description.replace(/`/g, "\\`")}\`); return false;">View More</a>
+</p>
+
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSexwAQ96rbqPpd9ISQRyue1xpNweqzDmDnEQdyqNdoadShwIQ/viewform?usp=header" 
+                   class="apply-btn" target="_blank" 
+                   onclick="trackApplication('${offer.id}', '${offer.title.replace(/'/g, "\\'")}')">
+                   <i ></i> Apply
+                </a>
+            `;
+            container.appendChild(card);
+        });
+        
+    } catch (error) {
+        console.error('Error loading offers:', error);
+        
+        // Hide loading state
+        if (loadingState) {
+            loadingState.style.display = 'none';
+        }
+        
+        // Fallback to localStorage with error message
+        const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+        
+        if (savedOffers.length === 0) {
+            container.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Erreur de chargement</h3>
+                    <p>Impossible de charger les offres. Veuillez réessayer.</p>
+                    <button onclick="renderOffers()">Réessayer</button>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = '';
+        savedOffers.forEach(offer => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <h3>${offer.title}</h3>
+                <div class="job-meta">
+                    <span><i class="fas fa-building"></i> ${offer.company}</span>
+                </div>
+                <p>${offer.description}</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSexwAQ96rbqPpd9ISQRyue1xpNweqzDmDnEQdyqNdoadShwIQ/viewform?usp=header" 
+                   class="apply-btn" target="_blank" 
+                   onclick="trackApplication('${offer.id}', '${offer.title.replace(/'/g, "\\'")}')">
+                   <i class="fas fa-paper-plane"></i> Apply
+                </a>
+            `;
+            container.appendChild(card);
+        });
+    }
+}
+
+
+// Track application function
+// Update the trackApplication function in joboffers.html
+async function trackApplication(jobId, jobTitle) {
+    console.log('Tracking application for:', jobTitle);
+    
+    // Store job title in sessionStorage for the form
+    sessionStorage.setItem('currentJobTitle', jobTitle);
+    sessionStorage.setItem('currentJobId', jobId);
+    
+    // Also store in a global variable for immediate access
+    window.currentApplication = {
+        jobId: jobId,
+        jobTitle: jobTitle,
+        timestamp: new Date().toISOString()
+    };  
+    
+    
+}
+
+// Load ApiService if not already loaded
+function loadApiService() {
+    if (typeof ApiService === 'undefined') {
+        const script = document.createElement('script');
+        script.src = "{{ url_for('static', filename='js/api.js') }}";
+        script.onload = function() {
+            console.log('ApiService loaded successfully');
+            renderOffers();
+        };
+        script.onerror = function() {
+            console.log('ApiService failed to load, using fallback');
+            renderOffers();
+        };
+        document.head.appendChild(script);
+    } else {
+        renderOffers();
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Job offers page loaded');
+    loadApiService();
+    
+    // Create particles effect
+    createParticles();
+});
+
+// Particles animation function
+function createParticles() {
+    const particlesContainer = document.getElementById('particles');
+    if (!particlesContainer) return;
+    
+    particlesContainer.innerHTML = '';
+    const particleCount = 15;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        const size = Math.random() * 10 + 5;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        
+        const duration = Math.random() * 20 + 10;
+        const delay = Math.random() * 5;
+        particle.style.animation = `float ${duration}s ${delay}s infinite linear`;
+        
+        particlesContainer.appendChild(particle);
+    }
+}
+
+// Recreate particles on resize
+window.addEventListener('resize', createParticles);
+
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>
+    
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SELECTIQ Junior - Offres d'Emploi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" type="text/css" href="../static/css/dashboard.css">
+
+</head>
+<body>
+  <nav>
+    <div class="brand">
+      <i class="fas fa-briefcase"></i>
+      <span>SELECTIQ Junior</span>
+    </div>
+    <div class="menu">
+      <a href="dashboard.html"><i class="fas fa-briefcase"></i> Offers</a>
+      <a href="apps.html"><i class="fas fa-file-alt"></i> Apps</a>
+      <a href="candidates.html"><i class="fas fa-users"></i> Candidats</a>
+      <a href="interview.html"><i class="fas fa-user-clock"></i> Interviews</a>
+      <a href="#" onclick="showDashboard()"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="#"><i class="fas fa-envelope"></i> Mail</a>
+    </div>
+    
+    <div class="profile-container">
+      <button class="profile-btn" onclick="toggleProfileDropdown()">
+        <img src="../static/assets/icon.jpg" alt="Profile" class="profile-img">
+        <i class="fas fa-caret-down"></i>
+      </button>
+      <div class="profile-dropdown" id="profileDropdown">
+        <a href="#" onclick="openModal('profile-modal')"><i class="fas fa-user"></i> My Profile</a>
+        
+        <a href="login.html" onclick="logout(event)"><i class="fas fa-sign-out-alt"></i> Disconnect</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Job Offers Section -->
+  <section class="offers-section" id="dashboardContent">
+    <div style="text-align: center; margin-top: 20px;">
+      <button onclick="ouvrirModal()" class="apply-btn">
+        <i class="fas fa-plus"></i> Add Offer
+      </button>
+    </div><br><br>
+    
+    <div class="big-card" id="jobOffersContainer">
+      <!-- Cards will be loaded dynamically -->
+    </div>
+  </section>
+
+  <!-- Applications Section -->
+  <section id="applicationsContainer">
+    <h2>Applications reçues</h2>
+    <div id="applicationsList">
+      <!-- Applications will be loaded here -->
+    </div>
+  </section>
+
+  <footer style=" color: #e2e8f0; text-align: center; padding: 1rem; font-size: 0.9rem; border-top: 1px solid #475569;">
+  <p style="margin: 0;">
+    © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved 
+    <a href="login.html" class="admin-link" style="color: #93c5fd; text-decoration: none; margin-left: 8px;">
+      
+    </a>
+  </p>
+</footer>
+
+
+  <!-- Add Modal -->
+  <div id="modal-ajout">
+    <div>
+      <h2 align="center">Add New Offer</h2>
+      <input type="text" id="input-title" placeholder="Offer Title" />
+      <input type="text" id="input-company" placeholder="Offer Category" />
+      <textarea type="text" id="input-description" placeholder="Offer Description" ></textarea>
+      <div style="text-align: center; ">
+        <button onclick="fermerModal()">Annuler</button>
+        <button onclick="validerAjout()">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="modal-edit">
+    <div>
+      <h2 align="center">Update Offer</h2>
+      <input type="hidden" id="edit-id">
+      <input type="text" id="edit-title" placeholder="Ex: Développeur Frontend" />
+      <input type="text" id="edit-company" placeholder="Ex: TechCorp" />
+      <textarea type="text" id="edit-description" placeholder="Description courte de l'offre" ></textarea>
+      <div style="text-align: center; ">
+        <button onclick="fermerEditModal()">Annuler</button>
+        <button onclick="validerEdit()">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal" id="profile-modal">
+    <div>
+      <div class="modal-header">
+        <h2><i class="fas fa-user"></i> My Profile</h2>
+        <button class="close-modal" onclick="closeModal('profile-modal')">&times;</button>
+      </div>
+      <div class="profile-info">
+        <img src="../static/assets/icon.jpg" alt="Profile" class="profile-pic-large">
+        <div class="profile-details">
+          <h3>Admin User</h3>
+          <p><i class="fas fa-envelope"></i> selectiqad@gmail.com</p>
+          <p><i class="fas fa-user-tag"></i> Senior Administrator</p>
+          <p><i class="fas fa-calendar-alt"></i> Member since: 08/15/2025</p>
+        </div>
+      </div>
+      <div style="text-align: center;">
+        <button class="apply-btn" onclick="closeModal('profile-modal')">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="offerModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeOfferModal()">&times;</span>
+
+    <div class="modal-section">
+      Offer Title :<br>
+      <span id="modal-title"></span>
+    </div><br>
+
+    <div class="modal-section">
+      Full Description :<br>
+      <span id="modal-company"></span></div>
+
+    
+  </div>
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
+  <script>
+    // Initialize with default offers if none exist
+    const defaultOffers = [
+      {
+        id: '1',
+        title: 'Développeur Frontend React',
+        company: 'CodingCity Inc.',
+        description: 'Opportunité pour un développeur frontend passionné par React et les interfaces modernes.'
+      },
+      {
+        id: '2',
+        title: 'Data Analyst Junior',
+        company: 'DataLab',
+        description: 'Poste pour analyste débutant avec compétences en Python et visualisation de données.'
+      },
+      {
+        id: '3',
+        title: 'Ingénieur IA',
+        company: 'AI Corp',
+        description: 'Recherche ingénieur en intelligence artificielle avec expérience en machine learning.'
+      }
+    ];
+
+    // Check authentication on page load
+    
+    
+    // Initialize job offers and applications from localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize offers
+      let savedOffers = localStorage.getItem('jobOffers');
+      
+      if (!savedOffers) {
+        localStorage.setItem('jobOffers', JSON.stringify(defaultOffers));
+        savedOffers = localStorage.getItem('jobOffers');
+      }
+      
+      const offers = JSON.parse(savedOffers);
+      renderOffers(offers);
+      
+      // Initialize applications if not exists
+      if (!localStorage.getItem('jobApplications')) {
+        localStorage.setItem('jobApplications', JSON.stringify([]));
+      }
+    
+    });
+    
+    function renderOffers(offers) {
+    const container = document.getElementById('jobOffersContainer');
+    container.innerHTML = '';
+    
+    offers.forEach(offer => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const maxLength = 70;  
+        const shortDesc = offer.description.length > maxLength 
+            ? offer.description.substring(0, maxLength) + "..." 
+            : offer.description;
+
+        card.innerHTML = `
+            <div class="card-menu" onclick="toggleDropdown(this)">
+                <i class="fas fa-ellipsis-v"></i>
+                <div class="dropdown-content">
+                    <a href="#" onclick="editOffer('${offer.id}')"><i class="fas fa-edit"></i> Edit</a>
+                    <a href="#" onclick="deleteOffer('${offer.id}')"><i class="fas fa-trash"></i> Delete</a>
+                </div>
+            </div>
+            <h3>${offer.title}</h3>
+            <div class="job-meta">
+                <span><i class="fas fa-building"></i> ${offer.company}</span>
+            </div>
+            <p>
+                ${shortDesc} 
+                ${offer.description.length > maxLength ? `<a href="#" onclick="openOfferModal('${offer.company}', '${offer.description.replace(/'/g, "\\'")}')">View more</a>` : ''}
+            </p>
+            <div class="button-container">
+                <a href="joboffers.html" class="apply-btn">View Offer</a>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+function openOfferModal(title, company, description) {
+    document.getElementById("modal-title").innerText =  title;
+    document.getElementById("modal-company").innerText =   company;
+    document.getElementById("offerModal").style.display = "flex";
+}
+
+function closeOfferModal() {
+    document.getElementById("offerModal").style.display = "none";
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("offerModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+
+    
+    
+    
+    function getStatusText(status) {
+      const statusTexts = {
+        'pending': 'En attente',
+        'reviewed': 'Examiné',
+        'interview': 'Entretien programmé',
+        'rejected': 'Rejeté',
+        'accepted': 'Accepté'
+      };
+      return statusTexts[status] || 'En attente';
+    }
+    
+    function updateApplicationStatus(index, newStatus) {
+      const applications = JSON.parse(localStorage.getItem('jobApplications'));
+      applications[index].status = newStatus;
+      localStorage.setItem('jobApplications', JSON.stringify(applications));
+      
+      // Add notification
+      const app = applications[index];
+      addNotification(`Statut changé pour ${app.nom} ${app.prenom} (${app.poste})`, `Nouveau statut: ${getStatusText(newStatus)}`);
+      
+      renderApplications();
+      
+      
+    }
+    
+    function deleteApplication(index) {
+      const applications = JSON.parse(localStorage.getItem('jobApplications'));
+      applications.splice(index, 1);
+      localStorage.setItem('jobApplications', JSON.stringify(applications));
+      renderApplications();
+      
+    }
+    
+    function addNotification(title, message) {
+      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title,
+        message,
+        time: new Date().toLocaleString(),
+        read: false
+      });
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    }
+    
+    
+    
+    function markNotificationAsRead(id, button) {
+      const notifications = JSON.parse(localStorage.getItem('notifications'));
+      const notification = notifications.find(n => n.id === id);
+      if (notification) {
+        notification.read = true;
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+        button.closest('.notification-item').classList.remove('unread');
+        button.style.display = 'none';
+      }
+    }
+    
+    
+    
+    // View switching functions
+    
+    
+    function showDashboard() {
+      document.getElementById('dashboardContent').style.display = 'block';
+      document.getElementById('applicationsContainer').style.display = 'none';
+    }
+    
+    // Rest of your existing functions (generateId, notifyChanges, deleteOffer, editOffer, etc.)
+    // ... [Keep all the existing functions from your original code]
+    
+    // Function to generate a unique ID
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+    
+    // Function to notify other tabs of changes
+    function notifyChanges() {
+      localStorage.setItem('jobOffers-update', Date.now());
+    }
+    
+    // Function to delete an offer
+  async function deleteOffer(id) {
+    if (confirm('Are you sure you want to delete this offer?')) {
+        try {
+            // Try to delete from API
+            await ApiService.deleteJobOffer(id);
+            console.log("✅ Offer deleted from database");
+        } catch (error) {
+            console.error("❌ API delete failed:", error);
+            // Continue with local delete even if API fails
+        }
+        
+        // Always delete from localStorage
+        const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+        const updatedOffers = savedOffers.filter(offer => offer.id != id);
+        localStorage.setItem('jobOffers', JSON.stringify(updatedOffers));
+        notifyChanges();
+        
+        // Reload offers
+        loadJobOffers();
+    }
+    return false;
+}
+
+// Make sure ApiService is available
+if (typeof ApiService === 'undefined') {
+    console.error('ApiService not loaded! Using localStorage only');
+    
+    // Simple fallback
+    window.ApiService = {
+        createJobOffer: async function(offer) {
+            throw new Error('API not available');
+        },
+        getJobOffers: async function() {
+            throw new Error('API not available');
+        },
+        deleteJobOffer: async function(id) {
+            throw new Error('API not available');
+        }
+    };
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadJobOffers();
+});
+    // Function to edit an offer
+   async function editOffer(id) {
+    try {
+        // First try to get the offer from API
+        const offers = await ApiService.getJobOffers();
+        const offerToEdit = offers.find(offer => offer.id == id);
+        
+        if (offerToEdit) {
+            document.getElementById('edit-id').value = offerToEdit.id;
+            document.getElementById('edit-title').value = offerToEdit.title;
+            document.getElementById('edit-company').value = offerToEdit.company;
+            document.getElementById('edit-description').value = offerToEdit.description;
+            document.getElementById('modal-edit').style.display = 'flex';
+        } else {
+            // Fallback to localStorage
+            const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+            const localOffer = savedOffers.find(offer => offer.id === id);
+            
+            if (localOffer) {
+                document.getElementById('edit-id').value = localOffer.id;
+                document.getElementById('edit-title').value = localOffer.title;
+                document.getElementById('edit-company').value = localOffer.company;
+                document.getElementById('edit-description').value = localOffer.description;
+                document.getElementById('modal-edit').style.display = 'flex';
+            } else {
+                alert('Offer not found');
+            }
+        }
+    } catch (error) {
+        console.error("Error loading offer for edit:", error);
+        // Fallback to localStorage
+        const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+        const localOffer = savedOffers.find(offer => offer.id === id);
+        
+        if (localOffer) {
+            document.getElementById('edit-id').value = localOffer.id;
+            document.getElementById('edit-title').value = localOffer.title;
+            document.getElementById('edit-company').value = localOffer.company;
+            document.getElementById('edit-description').value = localOffer.description;
+            document.getElementById('modal-edit').style.display = 'flex';
+        } else {
+            alert('Offer not found');
+        }
+    }
+    return false;
+}
+    // Function to validate and save edited offer
+   async function validerEdit() {
+    const id = document.getElementById('edit-id').value;
+    const title = document.getElementById('edit-title').value;
+    const company = document.getElementById('edit-company').value;
+    const description = document.getElementById('edit-description').value;
+    
+    if (title && company && description) {
+        try {
+            // Try to update via API
+            const result = await ApiService.updateJobOffer(id, {
+                title: title,
+                company: company,
+                description: description
+            });
+            
+            console.log("✅ Offer updated in database:", result);
+            
+            // Also update localStorage
+            const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+            const offerIndex = savedOffers.findIndex(offer => offer.id == id);
+            
+            if (offerIndex !== -1) {
+                savedOffers[offerIndex] = {
+                    id: id,
+                    title: title,
+                    company: company,
+                    description: description
+                };
+                localStorage.setItem('jobOffers', JSON.stringify(savedOffers));
+                notifyChanges();
+            }
+            
+            fermerEditModal();
+            loadJobOffers();
+            
+        } catch (error) {
+            console.error("❌ API update failed:", error);
+            // Fallback to localStorage
+            fallbackEditLocalStorage(id, title, company, description);
+        }
+    } else {
+        alert('Please fill all fields');
+    }
+}
+
+// Fallback function for editing
+function fallbackEditLocalStorage(id, title, company, description) {
+    const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+    const offerIndex = savedOffers.findIndex(offer => offer.id === id);
+    
+    if (offerIndex !== -1) {
+        savedOffers[offerIndex] = {
+            id: id,
+            title: title,
+            company: company,
+            description: description
+        };
+        localStorage.setItem('jobOffers', JSON.stringify(savedOffers));
+        notifyChanges();
+        
+        fermerEditModal();
+        renderOffers(savedOffers);
+        alert('Offer updated locally (API unavailable)');
+    } else {
+        alert('Offer not found in local storage');
+    }
+}
+
+// Fallback function for editing
+function fallbackEditLocalStorage(id, title, company, description) {
+    const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+    const offerIndex = savedOffers.findIndex(offer => offer.id === id);
+    
+    if (offerIndex !== -1) {
+        savedOffers[offerIndex] = {
+            id: id,
+            title: title,
+            company: company,
+            description: description
+        };
+        localStorage.setItem('jobOffers', JSON.stringify(savedOffers));
+        notifyChanges();
+        
+        fermerEditModal();
+        renderOffers(savedOffers);
+        alert('Offer updated locally (API unavailable)');
+    } else {
+        alert('Offer not found in local storage');
+    }
+} 
+
+// Fallback function for editing
+function fallbackEditLocalStorage(id, title, company, description) {
+    const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+    const offerIndex = savedOffers.findIndex(offer => offer.id === id);
+    
+    if (offerIndex !== -1) {
+        savedOffers[offerIndex] = {
+            id: id,
+            title: title,
+            company: company,
+            description: description
+        };
+        localStorage.setItem('jobOffers', JSON.stringify(savedOffers));
+        notifyChanges();
+        
+        fermerEditModal();
+        renderOffers(savedOffers);
+        alert('Offer updated locally (API unavailable)');
+    } else {
+        alert('Offer not found in local storage');
+    }
+}
+
+// Fallback function for editing
+function fallbackEditLocalStorage(id, title, company, description) {
+    const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+    const offerIndex = savedOffers.findIndex(offer => offer.id === id);
+    
+    if (offerIndex !== -1) {
+        savedOffers[offerIndex] = {
+            id: id,
+            title: title,
+            company: company,
+            description: description
+        };
+        localStorage.setItem('jobOffers', JSON.stringify(savedOffers));
+        notifyChanges();
+        
+        fermerEditModal();
+        renderOffers(savedOffers);
+        alert('Offer updated locally (API unavailable)');
+    } else {
+        alert('Offer not found in local storage');
+    }
+}
+    
+    // Function to close edit modal
+    function fermerEditModal() {
+      document.getElementById('modal-edit').style.display = 'none';
+    }
+    
+    // Logout function
+    function logout(event) {
+      try {
+        event?.preventDefault();
+        sessionStorage.removeItem('adminAuthenticated');
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("Logout failed:", error);
+        window.location.href = "login.html";
+      }
+    }
+    
+    // Toggle dropdown menu
+    function toggleDropdown(element) {
+      const dropdown = element.querySelector('.dropdown-content');
+      dropdown.classList.toggle('show');
+      
+      document.querySelectorAll('.dropdown-content').forEach(item => {
+        if (item !== dropdown) {
+          item.classList.remove('show');
+        }
+      });
+    }
+    
+    // Toggle profile dropdown
+    function toggleProfileDropdown() {
+      const dropdown = document.getElementById('profileDropdown');
+      dropdown.classList.toggle('show');
+    }
+    
+    // Close dropdowns when clicking elsewhere
+    window.onclick = function(event) {
+      if (!event.target.matches('.card-menu') && 
+          !event.target.matches('.fa-ellipsis-v') &&
+          !event.target.matches('.profile-btn') &&
+          !event.target.matches('.profile-img') &&
+          !event.target.matches('.fa-caret-down')) {
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+          dropdown.classList.remove('show');
+        });
+        document.getElementById('profileDropdown').classList.remove('show');
+      }
+    }
+    
+    // Modal functions
+    function ouvrirModal() {
+      document.getElementById('modal-ajout').style.display = 'flex';
+    }
+    
+    function fermerModal() {
+      document.getElementById('modal-ajout').style.display = 'none';
+    }
+    
+    async function validerAjout() {
+    const title = document.getElementById('input-title').value;
+    const company = document.getElementById('input-company').value;
+    const description = document.getElementById('input-description').value;
+    
+    console.log("📝 Creating job offer:", { title, company, description });
+    
+    if (title && company && description) {
+        try {
+            // Call the API to save to database
+            const result = await ApiService.createJobOffer({
+                title: title,
+                company: company, 
+                description: description
+            });
+            
+            console.log("✅ Offer created in database:", result);
+            
+            // Also update localStorage for backward compatibility
+            const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+            savedOffers.unshift({
+                id: result.id || generateId(),
+                title: title,
+                company: company,
+                description: description
+            });
+            localStorage.setItem('jobOffers', JSON.stringify(savedOffers));
+            notifyChanges();
+            
+            // Clear the form
+            document.getElementById('input-title').value = '';
+            document.getElementById('input-company').value = '';
+            document.getElementById('input-description').value = '';
+            
+            // Close modal
+            fermerModal();
+            
+            // Reload offers from API
+            loadJobOffers();
+            
+        } catch (error) {
+            console.error("❌ Error creating offer:", error);
+            
+        }
+    } else {
+        alert('Please fill all fields');
+    }
+}
+
+
+async function loadJobOffers() {
+    console.log("Loading job offers...");
+    // Show loading state
+    const container = document.getElementById('jobOffersContainer');
+    container.innerHTML = `
+        <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Fetching job offers...</p>
+        </div>
+    `;
+    try {
+       // Add artificial delay (3 seconds)
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // First try to load from API
+        const offers = await ApiService.getJobOffers();
+        console.log("✅ Offers loaded from API:", offers.length);
+        renderOffers(offers);
+        
+        // Also update localStorage with API data
+        localStorage.setItem('jobOffers', JSON.stringify(offers));
+        
+    } catch (error) {
+        console.error("❌ API load failed, using localStorage:", error);
+        
+        // Fallback to localStorage
+        const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+        console.log("📋 Using local offers:", savedOffers.length);
+        renderOffers(savedOffers);
+    }
+}
+// Add this CSS for the loading state
+const style = document.createElement('style');
+style.textContent = `
+    .loading-state {
+        text-align: center;
+        padding: 3rem;
+        grid-column: 1 / -1;
+        color: var(--text);
+    }
+    
+    .loading-state i {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    .loading-state p {
+        font-size: 1.1rem;
+        opacity: 0.8;
+    }
+    
+    .fa-spin {
+        animation: fa-spin 1s infinite linear;
+    }
+    
+    @keyframes fa-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+
+
+    // Function to open modal
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+      document.getElementById('profileDropdown').classList.remove('show');
+      return false;
+    }
+    
+    // Function to close modal
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+      return false;
+    }
+    
+    
+    
+    // Listen for storage events to sync between tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'jobOffers' || e.key === 'jobOffers-update') {
+        const savedOffers = JSON.parse(localStorage.getItem('jobOffers') || '[]');
+        renderOffers(savedOffers);
+      }
+      if (e.key === 'jobApplications') {
+        renderApplications();
+      }
+      
+    });
+    
+
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Submitted</title>
+    <script>
+        // Extract data from URL parameters (Google Forms adds these)
+        function getUrlParams() {
+            const params = {};
+            const url = window.location.href;
+            const queryString = url.split('?')[1];
+            
+            if (queryString) {
+                const pairs = queryString.split('&');
+                for (const pair of pairs) {
+                    const [key, value] = pair.split('=');
+                    params[decodeURIComponent(key)] = decodeURIComponent(value || '');
+                }
+            }
+            
+            return params;
+        }
+        
+        // Map Google Form field IDs to your field names
+        function mapFormData(params) {
+            // These are example field IDs - you need to replace them with your actual Google Form field IDs
+            const fieldMapping = {
+                'entry.877086558': 'full_name',    // Replace with your actual field IDs
+                'entry.1498135098': 'email',
+                'entry.920170201': 'education_level',
+                'entry.1082753663': 'cv_url'
+            };
+            
+            const mappedData = {};
+            
+            for (const [key, value] of Object.entries(params)) {
+                if (fieldMapping[key]) {
+                    mappedData[fieldMapping[key]] = value;
+                }
+            }
+            
+            return mappedData;
+        }
+        
+        window.onload = function() {
+            try {
+                const urlParams = getUrlParams();
+                const formData = mapFormData(urlParams);
+                
+                if (Object.keys(formData).length > 0) {
+                    // Store the form data to be picked up by the main window
+                    localStorage.setItem('googleFormData', JSON.stringify(formData));
+                    console.log('Form data captured:', formData);
+                }
+                
+                // Show confirmation message
+                document.getElementById('message').innerHTML = `
+                    <h2>Thank You !</h2>
+                    <p>Your application has been submitted successfully.</p>
+                    <p>You can close this window now.</p>
+                `;
+                
+            } catch (error) {
+                console.error('Error processing form data:', error);
+                document.getElementById('message').innerHTML = `
+                    <h2>Thank You!</h2>
+                    <p>Your application has been submitted.</p>
+                    <p>You can close this window now.</p>
+                `;
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h2 {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="message">
+            <h2>Processing your application...</h2>
+            <p>Please wait while we process your information.</p>
+        </div>
+    </div>
+     
+</body>
+</html>
