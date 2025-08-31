@@ -14,8 +14,16 @@ def create_app():
 
     # Configuration
     app.config['SECRET_KEY'] = 'selectiq-secret-key-2024-change-in-production'
-    # Use Render PostgreSQL if available, else fallback to SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+
+    # ✅ Use Render PostgreSQL only
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        raise ValueError("DATABASE_URL environment variable is not set! Cannot start app.")
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url += "?sslmode=require"
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True
 
@@ -66,7 +74,6 @@ def create_admin_user():
             db.session.commit()
             print(f"✅ Admin user created: {admin_email}")
         else:
-            # verify password
             if not admin.check_password(admin_password):
                 admin.set_password(admin_password)
                 db.session.commit()
