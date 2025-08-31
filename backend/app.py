@@ -18,9 +18,7 @@ def create_app():
     if os.environ.get('DATABASE_URL'):
         # Use Render's database URL if available
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace('postgres://', 'postgresql://')
-    else:
-        # Fallback to SQLite for local development
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+    
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = False  # ✅ Disable in production
