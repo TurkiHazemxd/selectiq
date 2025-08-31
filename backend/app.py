@@ -4,7 +4,6 @@ from routes.api import api_bp
 from models import db, User, JobOffer, JobApplication,JobCandidats,Interview
 import os
 from datetime import datetime
-from routes.forms import forms_bp
 from flask_cors import CORS
 
 def create_app():
