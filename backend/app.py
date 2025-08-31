@@ -15,7 +15,7 @@ def create_app():
     # Configuration
     app.config['SECRET_KEY'] = 'selectiq-secret-key-2024-change-in-production'
     # Use Render PostgreSQL if available, else fallback to SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True
 
