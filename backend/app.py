@@ -146,33 +146,6 @@ if __name__ == '__main__':
     
     app.run(debug=True, port=5000)
 # Add this to app.py (temporary solution)
-# Add this to app.py - Direct route without blueprint
-# Add this debug function to your app.py
-
-# Add this to your app.py after db.create_all()
-def check_candidates_table():
-    with app.app_context():
-        from models import JobCandidats
-        # Check if table exists
-        inspector = db.inspect(db.engine)
-        tables = inspector.get_table_names()
-        print("Database tables:", tables)
-        
-        if 'job_candidates' in tables:
-            print("✅ job_candidates table exists")
-            # Count records
-            count = JobCandidats.query.count()
-            print(f"📊 Number of candidates in database: {count}")
-            
-            # Show all candidates
-            candidates = JobCandidats.query.all()
-            for candidate in candidates:
-                print(f"👤 {candidate.full_name} - {candidate.email} - {candidate.job_title}")
-        else:
-            print("❌ job_candidates table does not exist")
-
-# Call this function after db.create_all()
-check_candidates_table()
 # In app.py - Add this function
 def create_missing_tables():
     with app.app_context():
