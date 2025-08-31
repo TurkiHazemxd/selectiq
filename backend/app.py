@@ -148,26 +148,7 @@ if __name__ == '__main__':
 # Add this to app.py (temporary solution)
 # Add this to app.py - Direct route without blueprint
 # Add this debug function to your app.py
-def check_database_tables():
-    with app.app_context():
-        inspector = db.inspect(db.engine)
-        tables = inspector.get_table_names()
-        print("📊 Database tables:", tables)
-        
-        if 'job_application' in tables:
-            print("✅ job_application table exists")
-            # Check columns
-            columns = inspector.get_columns('job_application')
-            print("📋 Table columns:")
-            for column in columns:
-                print(f"  - {column['name']}: {column['type']}")
-        else:
-            print("❌ job_application table does not exist")
 
-# Call this function after db.create_all()
-with app.app_context():
-    db.create_all()
-    check_database_tables()
 # Add this to your app.py after db.create_all()
 def check_candidates_table():
     with app.app_context():
