@@ -1,3 +1,3 @@
-from backend.app import create_app  # adjust path for your folder
+from app import create_app  # import your Flask factory
 
 app = create_app()
