@@ -146,28 +146,7 @@ if __name__ == '__main__':
     
     app.run(debug=True, port=5000)
 # Add this to app.py (temporary solution)
-# In app.py - Add this function
-def create_missing_tables():
-    with app.app_context():
-        inspector = db.inspect(db.engine)
-        existing_tables = inspector.get_table_names()
-        
-        # Create job_candidates table if it doesn't exist
-        if 'job_candidates' not in existing_tables:
-            print("🛠️ Creating missing job_candidates table...")
-            JobCandidats.__table__.create(db.engine)
-            print("✅ job_candidates table created successfully")
-        else:
-            print("✅ job_candidates table already exists")
 
-# Call this function after db.create_all()
-with app.app_context():
-    db.create_all()
-    create_admin_user()
-    create_default_job_offers()
-    create_missing_tables()  # Add this line
-    create_interview_table()
-    check_database_tables()  # Verify tables
 def create_interview_table():
     """Create interview table if it doesn't exist"""
     with app.app_context():
