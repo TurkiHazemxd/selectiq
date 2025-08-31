@@ -3,3 +3,6 @@ Flask-SQLAlchemy==3.0.5
 Werkzeug==2.3.7
 gunicorn==21.2.0
 flask-cors
+psycopg2-binary
+
+
