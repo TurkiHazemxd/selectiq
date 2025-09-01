@@ -681,3 +681,22 @@ def delete_interview_comment(id, comment_index):
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to delete comment'}), 500
+# In api.py - Add this DELETE endpoint for candidates
+@api_bp.route('/candidates/<int:id>', methods=['DELETE'])
+def delete_candidate(id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        candidate = JobCandidats.query.get_or_404(id)
+        db.session.delete(candidate)
+        db.session.commit()
+        
+        return jsonify({'message': 'Candidate deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error deleting candidate: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to delete candidate'}), 500

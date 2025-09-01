@@ -439,26 +439,22 @@
       }
     }
 
-    // Delete candidate
-    async function deleteCandidate(candidateId, fullName) {
-      if (!confirm(`Are you sure you want to delete ${fullName}?`)) {
+    // In candidates.html - Update the deleteCandidate function
+async function deleteCandidate(candidateId, candidateName) {
+    if (!confirm(`Are you sure you want to delete candidate "${candidateName}"?`)) {
         return;
-      }
-
-      try {
-        await ApiService.deleteCandidate(candidateId);
-        
-        // Remove from local data
-        candidatesData = candidatesData.filter(c => c.id !== candidateId);
-        filteredData = filteredData.filter(c => c.id !== candidateId);
-        
-        renderCandidates(filteredData);
-        showNotification('Candidate deleted successfully!', 'success');
-      } catch (error) {
-        console.error('Error deleting candidate:', error);
-        showNotification('Error deleting candidate', 'error');
-      }
     }
+    
+    try {
+        showNotification('Deleting candidate...', 'info');
+        await ApiService.deleteCandidate(candidateId);
+        showNotification('Candidate deleted successfully', 'success');
+        loadCandidates(); // Refresh the table
+    } catch (error) {
+        console.error('Error deleting candidate:', error);
+        showNotification('Failed to delete candidate', 'error');
+    }
+}
 
     // Format date
     function formatDate(dateString) {
