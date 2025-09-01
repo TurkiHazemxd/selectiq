@@ -700,3 +700,33 @@ def delete_candidate(id):
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to delete candidate'}), 500
+@api_bp.route('/applications/<int:id>', methods=['PUT'])
+def update_application(id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        application = JobApplication.query.get_or_404(id)
+        data = request.get_json()
+        
+        # Update the application fields
+        if 'status' in data:
+            application.status = data['status']
+        if 'education_level' in data:
+            application.education_level = data['education_level']
+        # Add other fields as needed
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Application updated successfully',
+            'application': application.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error updating application: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to update application'}), 500
