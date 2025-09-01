@@ -5,10 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SELECTIQ Junior - Candidats</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="../static/css/candidates.css" />
-<style>
-  
-</style>
+  <link rel="stylesheet" type="text/css" href="../static/css/candidates.css">
+  <style>
+    /* Add styles for auto-imported rows */
+    tr.auto-imported {
+      background-color: rgba(59, 130, 246, 0.1) !important;
+      animation: highlightRow 2s ease;
+    }
+    
+    @keyframes highlightRow {
+      0% { background-color: rgba(16, 185, 129, 0.3); }
+      100% { background-color: rgba(59, 130, 246, 0.1); }
+    }
+    
+    .import-status {
+      font-size: 0.8em;
+      color: #10b981;
+      margin-left: 8px;
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -21,11 +36,11 @@
       <a href="apps.html"><i class="fas fa-file-alt"></i> Apps</a>
       <a href="candidates.html" class="active"><i class="fas fa-users"></i> Candidats</a>
       <a href="interview.html"><i class="fas fa-user-clock"></i> Interviews</a>
-      <a href="#" onclick="showDashboard()"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="#"><i class="fas fa-th-large"></i> Dashboard</a>
       <a href="#"><i class="fas fa-envelope"></i> Mail</a>
     </div>
     
-     <div class="profile-container">
+    <div class="profile-container">
       <button class="profile-btn" onclick="toggleProfileDropdown()">
         <img src="../static/assets/icon.jpg" alt="Profile" class="profile-img">
         <i class="fas fa-caret-down"></i>
@@ -39,10 +54,12 @@
 
   <div class="main-content">
     <div class="table-header">
-      
+      <h2 class="table-title">Candidates</h2>
       <div class="table-controls">
-        <input type="text" class="search-box" placeholder="Rechercher candidats...">
-        
+        <input type="text" class="search-box" placeholder="Rechercher candidats..." id="searchInput">
+        <button class="apply-btn" onclick="syncCandidates()">
+          <i class="fas fa-sync-alt"></i> Sync Data
+        </button>
       </div>
     </div>
 
@@ -51,67 +68,69 @@
         <thead>
           <tr>
             <th>Full Name</th>
-            <th>Mail</th>
-            <th>JobOffer</th>
+            <th>Email</th>
+            <th>Job Title</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="applicationsTableBody">
-          <!-- Les candidatures seront chargées ici dynamiquement -->
+        <tbody id="candidatesTableBody">
+          <!-- Candidates will be loaded here dynamically -->
+          <tr>
+            <td colspan="5" style="text-align: center;">
+              <i class="fas fa-spinner fa-spin"></i> Loading candidates...
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
-    <div class="pagination-container">
-        <div class="pagination-info">Showing 1 - 8 of 66 Entries</div>
-        <div class="pagination-controls">
-          <span class="pagination-stats">By pe Net</span>
-          <div class="pagination-buttons">
-            <button class="pagination-btn">←</button>
-            <button class="pagination-btn active">1</button>
-            <button class="pagination-btn">2</button>
-            <button class="pagination-btn">3</button>
-            <button class="pagination-btn">→</button>
-          </div>
-        </div>
-      </div>
     
-
-  <!-- Details Modal -->
-  <div id="detailsModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <div class="modal-header">
-        <h3 id="modalTitle" align="center">Détails de la candidature</h3>
-      </div>
-      <div class="modal-body">
-        <div class="detail-row">
-          <span class="detail-label">Nom complet :</span>
-          <span class="detail-value" id="modalFullName"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Email :</span>
-          <span class="detail-value" id="modalEmail"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Poste :</span>
-          <span class="detail-value" id="modalJobTitle"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Formation :</span>
-          <span class="detail-value" id="modalEducation"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Statut :</span>
-          <span class="detail-value" id="modalStatus"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Date :</span>
-          <span class="detail-value" id="modalDate"></span>
+    <div class="pagination-container">
+      <div class="pagination-info" id="paginationInfo">Loading...</div>
+      <div class="pagination-controls">
+        <span class="pagination-stats" id="pageStats">10 per page</span>
+        <div class="pagination-buttons" id="paginationButtons">
+          <button class="pagination-btn" id="prevPageBtn" disabled onclick="changePage(currentPage - 1)">←</button>
+          <button class="pagination-btn active" onclick="changePage(1)">1</button>
+          <button class="pagination-btn" id="nextPageBtn" disabled onclick="changePage(currentPage + 1)">→</button>
         </div>
       </div>
     </div>
   </div>
-<!-- Profile Modal -->
+
+  <!-- View More Modal -->
+  <div id="viewMoreModal" class="modal">
+    <div class="modal-content">
+      <div class="modalviewmore-header">
+        <h3>Candidate Details</h3>
+        <span class="close-modalviewmore" onclick="closeModal('viewMoreModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>Full Name:</label>
+          <span id="modal-fullname"></span>
+        </div>
+        <div class="modal-field">
+          <label>Email:</label>
+          <span id="modal-email"></span>
+        </div>
+        <div class="modal-field">
+          <label>Job Title:</label>
+          <span id="modal-jobtitle"></span>
+        </div>
+        <div class="modal-field">
+          <label>Status:</label>
+          <span id="modal-status"></span>
+        </div>
+        <div class="modal-field">
+          <label>Application Date:</label>
+          <span id="modal-date"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
   <div class="profile-modal" id="profile-modal">
     <div>
       <div class="modal-header">
@@ -134,918 +153,401 @@
       </div>
     </div>
   </div>
-  <!-- Add this modal HTML after the existing detailsModal -->
-<!-- View More Modal -->
-<div id="viewMoreModal" class="modal">
-  <div class="modal-content">
-    <div class="modalviewmore-header">
-      <h3>Candidat Details</h3>
-      <span class="close-modalviewmore" onclick="closeModalviewmore('viewMoreModal')">&times;</span>
-    </div>
-    <div class="modal-body">
-      <div class="modal-field">
-        <label>Full Name :</label>
-        <span id="modal-fullname"></span>
-      </div><br>
-      <div class="modal-field">
-        <label>Education level :</label>
-        <span id="modal-education"></span>
-      </div>
-    </div>
-  </div>
-</div>
- <footer>
-  <p>
-    © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved
-    <a href="login.html" class="admin-link"></a>
-  </p>
-</footer>
 
+  <footer>
+    <p>
+      © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved
+    </p>
+  </footer>
 
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
   <script>
-  // Global variable to store applications
-  let applicationsData = [];
-  let refreshInterval = null;
-  let autoImportInterval = null;
+    // Global variables
+    let candidatesData = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let filteredData = [];
 
-  // Process application data with consistent field names
-  function processApplicationData(app) {
-    const timestamp = app.timestamp ? new Date(app.timestamp) : new Date();
-    
-    // Handle both French and English field names
-    const firstName = app.prenom || app.firstName || '';
-    const lastName = app.nom || app.name || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-    
-    return {
-      id: app.id || app.timestamp || Date.now().toString(),
-      date: app.date || timestamp.toLocaleDateString('fr-FR'),
-      time: app.time || timestamp.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}),
-      fullName: fullName || app.fullName || 'N/A',
-      email: app.email || 'N/A',
-      jobTitle: app.jobTitle,
-      educationLevel: app.formation || app.educationLevel || 'Non spécifié',
-      status: app.status || 'pending',
-      timestamp: app.timestamp || Date.now()
-    };
-  }
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      addStatusStyles();
+      initEventListeners();
+      loadCandidates();
+    });
 
-  // Load applications from localStorage
-  function loadApplications() {
-    try {
-      showLoadingState(true);
+    // Add status styles to the page
+    function addStatusStyles() {
+      const style = document.createElement('style');
+      style.textContent = `
+        .status-pending { background-color: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-reviewed { background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-interview { background-color: #8b5cf6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-rejected { background-color: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status-accepted { background-color: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Initialize event listeners
+    function initEventListeners() {
+      const searchInput = document.getElementById('searchInput');
       
-      // Load from localStorage
-      const localData = localStorage.getItem('jobApplications');
-      if (localData) {
-        try {
-          applicationsData = JSON.parse(localData).map(processApplicationData);
-          renderApplications(applicationsData);
-        } catch (e) {
-          console.error('Error parsing local data:', e);
-          showErrorState('Erreur de chargement des données locales');
-        }
-      } else {
-        showNoDataState();
+      if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
       }
-    } catch (error) {
-      console.error('Loading failed:', error);
-      showErrorState('Erreur de chargement');
-    } finally {
-      showLoadingState(false);
-    }
-  }
-
-  // Show loading state
-  function showLoadingState(show) {
-    const tbody = document.getElementById("applicationsTableBody");
-    if (!tbody) return;
-    
-    if (show) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Chargement...</td></tr>';
-    }
-  }
-
-  // Show error state
-  function showErrorState(message) {
-    const tbody = document.getElementById("applicationsTableBody");
-    if (!tbody) return;
-    
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align:center;color:#ef4444;">
-          ${message}
-          <button onclick="retryLoading()" style="
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            margin-top: 5px;
-            cursor: pointer;
-          ">Réessayer</button>
-        </td>
-      </tr>
-    `;
-  }
-
-  // Show no data state
-  function showNoDataState() {
-    const tbody = document.getElementById("applicationsTableBody");
-    if (!tbody) return;
-    
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucune candidature trouvée</td></tr>';
-  }
-
-  // Retry loading
-  function retryLoading() {
-    loadApplications();
-  }
-
-  // Show application details in modal
-  function showApplicationDetails(appId) {
-    const app = applicationsData.find(a => a.id === appId);
-    if (!app) return;
-    
-    // Populate modal with application data
-    document.getElementById('modalFullName').textContent = app.fullName;
-    document.getElementById('modalEmail').textContent = app.email;
-    document.getElementById('modalJobTitle').textContent = app.jobTitle;
-    document.getElementById('modalEducation').textContent = app.educationLevel;
-    document.getElementById('modalStatus').textContent = getStatusText(app.status);
-    document.getElementById('modalDate').textContent = `${app.date} à ${app.time}`;
-    
-    // Show modal
-    document.getElementById('detailsModal').style.display = 'block';
-  }
-
-  // Close modal
-  function closeModal() {
-    document.getElementById('detailsModal').style.display = 'none';
-  } 
-
-  // Render applications in table
-  function renderApplications(data) {
-    const tbody = document.getElementById("applicationsTableBody");
-    if (!tbody) return;
-
-    if (!data || data.length === 0) {
-      showNoDataState();
-      return;
     }
 
-    tbody.innerHTML = data.map(app => `
-      <tr>
-        <td>${app.fullName}</td>
-        <td>${app.email}</td>
-        <td>${app.jobTitle}</td>
-        <td>
-          <div class="status-container">
-            <span class="status-${app.status.toLowerCase()}">${getStatusText(app.status)}</span>
+    // Handle search input
+    function handleSearch() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      filterCandidates(searchTerm);
+    }
+
+    // Filter candidates based on search term
+    function filterCandidates(searchTerm) {
+      filteredData = candidatesData.filter(candidate => {
+        return candidate.full_name.toLowerCase().includes(searchTerm) ||
+               candidate.email.toLowerCase().includes(searchTerm) ||
+               candidate.job_title.toLowerCase().includes(searchTerm);
+      });
+      
+      currentPage = 1;
+      renderCandidates(filteredData);
+    }
+
+    // Load candidates from the database
+    async function loadCandidates() {
+      try {
+        showLoadingState(true);
+        
+        // Load from the database
+        candidatesData = await ApiService.getCandidates();
+        console.log('Loaded candidates from database:', candidatesData.length);
+        
+        filteredData = [...candidatesData];
+        renderCandidates(filteredData);
+        
+      } catch (error) {
+        console.error('Error loading candidates:', error);
+        showErrorState('Failed to load candidates. Please try again.');
+      } finally {
+        showLoadingState(false);
+      }
+    }
+
+    // Manual sync with database
+    async function syncCandidates() {
+      await loadCandidates();
+    }
+
+    // Show loading state
+    function showLoadingState(show) {
+      const tbody = document.getElementById('candidatesTableBody');
+      if (!tbody) return;
+
+      if (show) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+      }
+    }
+
+    // Show error state
+    function showErrorState(message) {
+      const tbody = document.getElementById('candidatesTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center;color:#ef4444;">
+            ${message}
+            <button onclick="loadCandidates()" style="
+              background: #3b82f6;
+              color: white;
+              border: none;
+              padding: 5px 10px;
+              border-radius: 4px;
+              margin-top: 5px;
+              cursor: pointer;
+            ">Try Again</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Render candidates in table
+    function renderCandidates(data) {
+      const tbody = document.getElementById('candidatesTableBody');
+      if (!tbody) return;
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No candidates found</td></tr>';
+        updatePagination(0);
+        return;
+      }
+
+      // Apply pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedData = data.slice(startIndex, endIndex);
+
+      tbody.innerHTML = paginatedData.map(candidate => `
+        <tr class="${candidate.recentlyImported ? 'auto-imported' : ''}">
+          <td>${candidate.full_name}</td>
+          <td>${candidate.email}</td>
+          <td>${candidate.job_title}</td>
+          <td>
+            <span class="status-${candidate.status}">${getStatusText(candidate.status)}</span>
+          </td>
+          <td>
             <div class="dropdown">
               <i class="fas fa-ellipsis-v three-dots"></i>
               <div class="dropdown-content">
-                <a href="#" onclick="openCandidateModal('${app.fullName}', '${app.educationLevel}'); return false;">View More</a>
-                <a href="#" onclick="deleteApplication(event, '${app.id}')" style="color: #ef4444;">Supprimer</a>
+                <a href="#" onclick="viewCandidateDetails(${candidate.id}); return false;">View Details</a>
+                <a href="#" onclick="updateCandidateStatus(${candidate.id}, 'interview'); return false;">Mark for Interview</a>
+                <a href="#" onclick="deleteCandidate(${candidate.id}, '${candidate.full_name}'); return false;" style="color: #ef4444;">
+                  <i class="fas fa-trash"></i> Delete
+                </a>
               </div>
             </div>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+          </td>
+        </tr>
+      `).join('');
 
-    initDropdowns();
-  }
-
-  // Get status text in French
-  function getStatusText(status) {
-    const statusMap = {
-      'pending': 'En attente',
-      'reviewed': 'Examiné',
-      'interview': 'Entretien',
-      'rejected': 'Rejeté',
-      'accepted': 'Accepté'
-    };
-    return statusMap[status] || status;
-  }
-
-  // Change application status
-  function changeStatus(event, id, newStatus) {
-    event.preventDefault();
-    const appIndex = applicationsData.findIndex(app => app.id === id);
-    if (appIndex !== -1) {
-      applicationsData[appIndex].status = newStatus;
-      localStorage.setItem('jobApplications', JSON.stringify(applicationsData));
-      renderApplications(applicationsData);
+      initDropdowns();
+      updatePagination(data.length);
     }
-  }
 
-  // Delete application
-  function deleteApplication(event, id) {
-    event.preventDefault();
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette candidature ?')) {
-      applicationsData = applicationsData.filter(app => app.id !== id);
-      localStorage.setItem('jobApplications', JSON.stringify(applicationsData));
-      renderApplications(applicationsData);
+    // Get status text
+    function getStatusText(status) {
+      const statusMap = {
+        pending: 'Pending',
+        reviewed: 'Reviewed',
+        interview: 'Interview',
+        rejected: 'Rejected',
+        accepted: 'Accepted'
+      };
+      return statusMap[status] || status;
     }
-  }
 
-  // Initialize dropdown menus
-  function initDropdowns() {
-    document.querySelectorAll('.three-dots').forEach(dot => {
-      dot.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const dropdown = this.nextElementSibling;
-        dropdown.classList.toggle('show');
-        document.querySelectorAll('.dropdown-content').forEach(d => {
-          if (d !== dropdown) d.classList.remove('show');
+    // Initialize dropdown menus
+    function initDropdowns() {
+      document.querySelectorAll('.three-dots').forEach(dot => {
+        dot.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const dropdown = this.nextElementSibling;
+          dropdown.classList.toggle('show');
+          document.querySelectorAll('.dropdown-content').forEach(d => {
+            if (d !== dropdown) d.classList.remove('show');
+          });
         });
       });
-    });
-    
-    window.addEventListener('click', () => {
-      document.querySelectorAll('.dropdown-content').forEach(d => {
-        d.classList.remove('show');
+
+      window.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-content').forEach(d => {
+          d.classList.remove('show');
+        });
       });
-    });
-  }
-
-  // Initialize search functionality
-  function initSearch() {
-    const searchBox = document.querySelector('.search-box');
-    searchBox?.addEventListener('input', function() {
-      const searchTerm = this.value.toLowerCase();
-      const filteredData = applicationsData.filter(app => 
-        app.fullName.toLowerCase().includes(searchTerm) ||
-        app.email.toLowerCase().includes(searchTerm) ||
-        app.jobTitle.toLowerCase().includes(searchTerm)
-      );
-      renderApplications(filteredData);
-    });
-  }
-
-  // Initialize filter functionality
-  function initFilter() {
-    const filterSelect = document.querySelector('.filter-select');
-    filterSelect?.addEventListener('change', function() {
-      const filterValue = this.value;
-      const filteredData = filterValue 
-        ? applicationsData.filter(app => app.jobTitle.includes(filterValue))
-        : applicationsData;
-      renderApplications(filteredData);
-    });
-  }
-
- 
-
-  // Close modal when clicking outside
-  window.addEventListener('click', function(event) {
-    const modal = document.getElementById('detailsModal');
-    if (event.target === modal) {
-      closeModal();
     }
-  });
 
-  // Function to show notification
-  function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    
-    // Add icon and message
-    let icon = 'info-circle';
-    if (type === 'success') icon = 'check-circle';
-    if (type === 'error') icon = 'exclamation-circle';
-    
-    notification.innerHTML = `
-      <i class="fas fa-${icon}"></i>
-      <span>${message}</span>
-    `;
-    
-    // Add to body
-    document.body.appendChild(notification);
-    
-    // Show notification
-    setTimeout(() => {
-      notification.classList.add('show');
-    }, 100);
-    
-    // Hide after 5 seconds
-    setTimeout(() => {
-      notification.classList.remove('show');
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 300);
-    }, 5000);
-  }
+    // Update pagination
+    function updatePagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const paginationInfo = document.getElementById('paginationInfo');
+      const prevPageBtn = document.getElementById('prevPageBtn');
+      const nextPageBtn = document.getElementById('nextPageBtn');
 
-  
+      const startItem = (currentPage - 1) * itemsPerPage + 1;
+      const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+      
+      if (paginationInfo) {
+        paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${totalItems} candidates`;
+      }
 
+      if (prevPageBtn) {
+        prevPageBtn.disabled = currentPage === 1;
+      }
+      
+      if (nextPageBtn) {
+        nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+      }
 
+      const buttons = document.querySelectorAll('.pagination-buttons button');
+      buttons.forEach(btn => {
+        if (btn.id !== 'prevPageBtn' && btn.id !== 'nextPageBtn') {
+          btn.remove();
+        }
+      });
 
-  // Initialize everything when DOM is loaded
-  document.addEventListener("DOMContentLoaded", () => {
-    
-    initSearch();
-    initFilter();
-    
-    // Load applications from localStorage
-    loadApplications();
-    
-    
-    
-    // Check if there's a new application to add (from the form)
-    checkForNewApplication();
-    
-    // Initialize automatic import system
-    initializeImportTracking();
-    startAutomaticImport();
-  });
+      const paginationButtons = document.getElementById('paginationButtons');
+      if (paginationButtons) {
+        for (let i = 1; i <= totalPages; i++) {
+          const pageBtn = document.createElement('button');
+          pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+          pageBtn.textContent = i;
+          pageBtn.onclick = () => changePage(i);
+          nextPageBtn.parentNode.insertBefore(pageBtn, nextPageBtn);
+        }
+      }
+    }
 
-  // Check for new application from the form
-  function checkForNewApplication() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const newApp = urlParams.get('newApplication');
-    
-    if (newApp) {
+    // Change page
+    function changePage(page) {
+      currentPage = page;
+      renderCandidates(filteredData);
+    }
+
+    // View candidate details
+    async function viewCandidateDetails(candidateId) {
       try {
-        const applicationData = JSON.parse(decodeURIComponent(newApp));
-        
-        // Get existing applications
-        const existingApplications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-        
-        // Add new application with unique ID
-        applicationData.id = Date.now().toString();
-        applicationData.timestamp = new Date().toISOString();
-        applicationData.status = 'pending';
-        
-        existingApplications.push(applicationData);
-        
-        // Save back to localStorage
-        localStorage.setItem('jobApplications', JSON.stringify(existingApplications));
-        localStorage.setItem('jobApplicationsPrevious', JSON.stringify(existingApplications));
-        
-        // Reload the table
-        loadApplications();
-        
-        // Show notification
-        showNotification('Nouvelle candidature ajoutée!', 'success');
-        
-        // Clean the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {
-        console.error('Error processing new application:', e);
-        showNotification('Erreur lors de l\'ajout de la candidature', 'error');
+        const candidate = candidatesData.find(c => c.id === candidateId);
+        if (candidate) {
+          document.getElementById('modal-fullname').textContent = candidate.full_name;
+          document.getElementById('modal-email').textContent = candidate.email;
+          document.getElementById('modal-jobtitle').textContent = candidate.job_title;
+          document.getElementById('modal-status').textContent = getStatusText(candidate.status);
+          document.getElementById('modal-date').textContent = formatDate(candidate.created_at);
+          
+          document.getElementById('viewMoreModal').style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error viewing candidate details:', error);
+        showNotification('Error loading candidate details', 'error');
       }
     }
-  }
 
-  
-  
-  
-  
-  function logout(event) {
-    event.preventDefault();
-    console.log('Logging out...');
-    window.location.href = 'login.html';
-  }
-  
-  function showDashboard() {
-    console.log('Showing dashboard...');
-  }
-
-  // Function to simulate form submission (for testing)
-  function simulateFormSubmission() {
-    const sampleData = {
-      nom: 'Dupont',
-      prenom: 'Jean',
-      email: 'jean.dupont@example.com',
-      poste: 'Développeur Frontend React',
-      formation: 'Master Informatique'
-    };
-    
-    // Encode the data as URL parameter
-    const encodedData = encodeURIComponent(JSON.stringify(sampleData));
-    
-    // Redirect to this page with the data as parameter
-    window.location.href = `new.html?newApplication=${encodedData}`;
-  }
-  
-  // ==================== AUTOMATIC IMPORT SYSTEM ====================
-  
-  // Initialize automatic import when page loads
-  // Update these functions in candidates.html
-function initializeImportTracking() {
-    if (!localStorage.getItem('importedCandidates')) {
-        localStorage.setItem('importedCandidates', JSON.stringify([]));
-    }
-    console.log('Candidate import tracking initialized');
-}
-
-function startAutomaticImport() {
-    console.log('Starting automatic candidate import system...');
-    
-    // Run immediately on page load
-    checkAndImportNewCandidates();
-    
-    // Then check every 30 seconds for new candidates
-    autoImportInterval = setInterval(checkAndImportNewCandidates, 30000);
-    
-    // Also check when table is rendered/updated
-    const originalRenderApplications = renderApplications;
-    renderApplications = function(data) {
-        originalRenderApplications(data);
-        setTimeout(checkAndImportNewCandidates, 1000);
-    };
-}
-
-  // Start automatic import process
-  function startAutomaticImport() {
-    console.log('Starting automatic import system...');
-    
-    // Run immediately on page load
-    checkAndImportNewCandidates();
-    
-    // Then check every 30 seconds for new applications
-    autoImportInterval = setInterval(checkAndImportNewCandidates, 30000);
-    
-    // Also check when table is rendered/updated
-    const originalRenderApplications = renderApplications;
-    renderApplications = function(data) {
-      originalRenderApplications(data);
-      setTimeout(checkAndImportNewApplications, 1000);
-    };
-  }
-
-  // Stop automatic import (optional)
-  function stopAutomaticImport() {
-    if (autoImportInterval) {
-      clearInterval(autoImportInterval);
-      autoImportInterval = null;
-      console.log('Automatic import stopped');
-    }
-  }
-
-  // Main function to check and import new applications
-  // Update the main import function to use candidates
-async function checkAndImportNewCandidates() {
-    try {
-      const rows = document.querySelectorAll('table tbody tr');
-      const importedCandidates = JSON.parse(localStorage.getItem('importedCandidates') || '[]');
-      
-      // Filter new rows that haven't been imported
-      const newRows = Array.from(rows).filter(row => {
-        const email = row.cells[1]?.textContent.trim();
-        const jobTitle = row.cells[2]?.textContent.trim();
+    // Update candidate status
+    async function updateCandidateStatus(candidateId, newStatus) {
+      try {
+        await ApiService.updateCandidate(candidateId, { status: newStatus });
         
-        return email && jobTitle && 
-               email !== 'N/A' && jobTitle !== 'N/A' &&
-               !row.dataset.imported &&
-               !importedCandidates.some(candidate => candidate.email === email && candidate.job_title === jobTitle);
-      });
-      
-      if (newRows.length === 0) {
-        return; // No new candidates found
-      }
-      
-      console.log(`Found ${newRows.length} new candidates to import automatically`);
-      
-      let importedCount = 0;
-      const newlyImported = [];
-      
-      // Import each new candidate
-      for (const row of newRows) {
-        try {
-          const cells = row.querySelectorAll('td');
-          
-          // Extract candidate data
-          const candidateData = {
-            full_name: cells[0].textContent.trim(),
-            email: cells[1].textContent.trim(),
-            job_title: cells[2].textContent.trim(),
-            status: extractStatusFromCell(cells[3])
-          };
-          
-          // Validate required fields
-          if (!candidateData.email.includes('@') || candidateData.full_name === 'N/A') {
-            continue; // Skip invalid candidates
-          }
-          
-          // Check if already exists in database (additional safety)
-          const existingCandidates = await ApiService.getCandidates().catch(() => []);
-          const alreadyExists = existingCandidates.some(candidate => 
-            candidate.email === candidateData.email && 
-            candidate.job_title === candidateData.job_title
-          );
-          
-          if (alreadyExists) {
-            // Mark as imported but don't send to API
-            newlyImported.push({
-              email: candidateData.email,
-              job_title: candidateData.job_title,
-              timestamp: new Date().toISOString(),
-              exists_in_db: true
-            });
-            row.dataset.imported = 'true';
-            continue;
-          }
-          
-          // Send to API
-          const result = await ApiService.createCandidate(candidateData);
-          console.log('Auto-imported candidate:', candidateData.email);
-          
-          importedCount++;
-          
-          // Store in tracking system
-          newlyImported.push({
-            email: candidateData.email,
-            job_title: candidateData.job_title,
-            timestamp: new Date().toISOString(),
-            id: result.candidate?.id
-          });
-          
-          // Mark as imported
-          row.dataset.imported = 'true';
-          row.classList.add('auto-imported');
-          
-          
-          
-        } catch (error) {
-          console.error('Error in auto-import:', error);
-          
+        // Update local data
+        const candidateIndex = candidatesData.findIndex(c => c.id === candidateId);
+        if (candidateIndex !== -1) {
+          candidatesData[candidateIndex].status = newStatus;
         }
         
-        // Small delay between imports
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      // Update imported candidates list
-      if (newlyImported.length > 0) {
-        const allImported = [...importedCandidates, ...newlyImported];
-        localStorage.setItem('importedCandidates', JSON.stringify(allImported));
-        
-        if (importedCount > 0) {
-          showAutoImportNotification(`Automatically imported ${importedCount} new candidates`);
+        // Update filtered data
+        const filteredCandidateIndex = filteredData.findIndex(c => c.id === candidateId);
+        if (filteredCandidateIndex !== -1) {
+          filteredData[filteredCandidateIndex].status = newStatus;
         }
-      }
-      
-    } catch (error) {
-      console.error('Auto-import system error:', error);
-    }
-  }
-
-  
-
-  // Show notification for auto-import
-  function showAutoImportNotification(message) {
-    // Remove existing notification
-    const existingNotification = document.getElementById('autoImportNotification');
-    if (existingNotification) {
-      existingNotification.remove();
-    }
-    
-    // Create new notification
-    const notification = document.createElement('div');
-    notification.id = 'autoImportNotification';
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #10b981;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10000;
-      font-size: 14px;
-      animation: slideIn 0.3s ease;
-    `;
-    
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-      }
-    }, 5000);
-  }
-
-  // Helper functions
-  function extractStatusFromCell(statusCell) {
-    const statusElement = statusCell.querySelector('[class*="status-"]');
-    if (statusElement) {
-      const classList = statusElement.className.split(' ');
-      const statusClass = classList.find(cls => cls.startsWith('status-'));
-      if (statusClass) {
-        return statusClass.replace('status-', '');
-      }
-      return statusElement.textContent.trim().toLowerCase();
-    }
-    return 'pending';
-  }
-
-  function extractEducationFromRow(row) {
-    const dropdown = row.querySelector('.dropdown-content');
-    if (dropdown) {
-      const educationSpan = Array.from(dropdown.querySelectorAll('span'))
-        .find(span => span.textContent.includes('Formation:') || span.textContent.includes('Education:'));
-      if (educationSpan) {
-        return educationSpan.textContent.replace(/Formation:|Education:/, '').trim();
+        
+        renderCandidates(filteredData);
+        showNotification('Candidate status updated successfully!', 'success');
+      } catch (error) {
+        console.error('Error updating candidate status:', error);
+        showNotification('Error updating candidate status', 'error');
       }
     }
-    return 'Non spécifié';
-  }
 
-  function extractCvUrlFromRow(row) {
-    const cvLink = row.querySelector('a[href*="#"], a[href*="http"]');
-    return cvLink ? cvLink.href : '';
-  }
+    // Delete candidate
+    async function deleteCandidate(candidateId, fullName) {
+      if (!confirm(`Are you sure you want to delete ${fullName}?`)) {
+        return;
+      }
 
-  // Mock API Service for demonstration
-  // Replace the ApiService with this CANDIDATES version
-const ApiService = {
-  getCandidates: async function() {
-    try {
-      console.log("🔍 Fetching candidates from API...");
-      const response = await fetch('/api/candidates', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      console.log(`📊 GET Candidates response: ${response.status} ${response.statusText}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log(`✅ Found ${data.length} candidates in database`);
-      return data;
-      
-    } catch (error) {
-      console.error('Error fetching candidates:', error);
-      if (error.message.includes('401') || error.message.includes('403')) {
-        showNotification('Session expired. Please log in again.', 'error');
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      }
-      throw error;
-    }
-  },
-  
-  createCandidate: async function(candidateData) {
-    try {
-      console.log("💾 Saving candidate to database:", candidateData);
-      const response = await fetch('/api/candidates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(candidateData)
-      });
-      
-      console.log(`📊 POST Candidate response: ${response.status} ${response.statusText}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ API Error: ${errorText}`);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      console.log("✅ Candidate saved successfully:", result);
-      return result;
-      
-    } catch (error) {
-      console.error('Error creating candidate:', error);
-      if (error.message.includes('401') || error.message.includes('403')) {
-        showNotification('Session expired. Please log in again.', 'error');
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      }
-      throw error;
-    }
-  }
-};
-// Add this function to check authentication
-async function checkAuthentication() {
-  try {
-    const response = await fetch('/api/check-auth', {
-      method: 'GET',
-      credentials: 'include'
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`🔐 Authentication status: ${data.authenticated}`);
-      if (data.authenticated) {
-        console.log(`👤 Logged in as: ${data.user.email}`);
-        return true;
+      try {
+        await ApiService.deleteCandidate(candidateId);
+        
+        // Remove from local data
+        candidatesData = candidatesData.filter(c => c.id !== candidateId);
+        filteredData = filteredData.filter(c => c.id !== candidateId);
+        
+        renderCandidates(filteredData);
+        showNotification('Candidate deleted successfully!', 'success');
+      } catch (error) {
+        console.error('Error deleting candidate:', error);
+        showNotification('Error deleting candidate', 'error');
       }
     }
-    return false;
-  } catch (error) {
-    console.error('Error checking authentication:', error);
-    return false;
-  }
-}
 
-// Update the startAutomaticImport function
-async function startAutomaticImport() {
-  console.log('Starting automatic candidate import system...');
-  
-  // Check authentication first
-  const isAuthenticated = await checkAuthentication();
-  if (!isAuthenticated) {
-    console.log('❌ Not authenticated. Redirecting to login...');
-    showNotification('Please log in to enable automatic import', 'error');
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 2000);
-    return;
-  }
-  
-  // Run immediately on page load
-  checkAndImportNewCandidates();
-  
-  // Then check every 30 seconds for new candidates
-  autoImportInterval = setInterval(checkAndImportNewCandidates, 30000);
-  
-  // Also check when table is rendered/updated
-  const originalRenderApplications = renderApplications;
-  renderApplications = function(data) {
-    originalRenderApplications(data);
-    setTimeout(checkAndImportNewCandidates, 1000);
-  };
-}
+    // Format date
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      try {
+        const date = new Date(dateString);
+        return isNaN(date) ? 'N/A' : date.toLocaleDateString('fr-FR');
+      } catch {
+        return 'N/A';
+      }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+      // Remove any existing notification
+      const existingNotification = document.getElementById('candidateNotification');
+      if (existingNotification) {
+        existingNotification.remove();
+      }
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.id = 'candidateNotification';
+      notification.style = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 6px;
+        color: white;
+        z-index: 10000;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background-color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      `;
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 3000);
+    }
 
     // Toggle profile dropdown
     function toggleProfileDropdown() {
       const dropdown = document.getElementById('profileDropdown');
       dropdown.classList.toggle('show');
     }
-    
-    // Close dropdowns when clicking elsewhere
-    window.onclick = function(event) {
-      if (!event.target.matches('.card-menu') && 
-          !event.target.matches('.fa-ellipsis-v') &&
-          !event.target.matches('.profile-btn') &&
-          !event.target.matches('.profile-img') &&
-          !event.target.matches('.fa-caret-down')) {
-        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-          dropdown.classList.remove('show');
-        });
-        document.getElementById('profileDropdown').classList.remove('show');
-      }
-    }
-    // Function to open modal
+
+    // Open modal
     function openModal(modalId) {
       document.getElementById(modalId).style.display = 'flex';
       document.getElementById('profileDropdown').classList.remove('show');
-      return false;
     }
-    
-    // Function to close modal
-    function closeModals(modalId) {
+
+    // Close modal
+    function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
-      return false;
     }
-    // ==================== PAGINATION ====================
-// Pagination variables
-let currentPage = 1;
-const itemsPerPage = 10;
 
-// Update pagination function
-function updatePagination(totalItems) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const paginationInfo = document.querySelector('.pagination-info');
-    const paginationButtons = document.querySelector('.pagination-buttons');
-    const prevPageBtn = paginationButtons.querySelector('.pagination-btn:first-child');
-    const nextPageBtn = paginationButtons.querySelector('.pagination-btn:last-child');
-    
-    if (!paginationInfo || !paginationButtons) return;
-    
-    // Update pagination info
-    const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-    paginationInfo.textContent = totalItems === 0 ? 
-        'Aucune candidature' : 
-        `Affichage de ${startItem} à ${endItem} sur ${totalItems} candidatures`;
-    
-    // Update pagination buttons
-    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
-    if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
-    
-    // Remove all page number buttons (except prev/next)
-    const pageButtons = paginationButtons.querySelectorAll('.pagination-btn:not(:first-child):not(:last-child)');
-    pageButtons.forEach(btn => btn.remove());
-    
-    // Add page number buttons between prev and next buttons
-    if (totalPages > 0) {
-        const nextBtn = paginationButtons.querySelector('.pagination-btn:last-child');
-        for (let i = 1; i <= totalPages; i++) {
-            const pageBtn = document.createElement('button');
-            pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
-            pageBtn.textContent = i;
-            pageBtn.onclick = () => changePage(i);
-            nextBtn.parentNode.insertBefore(pageBtn, nextBtn);
-        }
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('viewMoreModal');
+      if (event.target === modal) {
+        closeModal('viewMoreModal');
+      }
+      
+      const profileModal = document.getElementById('profile-modal');
+      if (event.target === profileModal) {
+        closeModal('profile-modal');
+      }
+    };
+
+    // Logout function
+    function logout(event) {
+      event.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        ApiService.logout().then(() => {
+          window.location.href = 'login.html';
+        }).catch(error => {
+          console.error('Logout error:', error);
+          window.location.href = 'login.html';
+        });
+      }
     }
-}
-
-// Change page function
-function changePage(page) {
-    currentPage = page;
-    renderApplications(applicationsData);
-}
-
-// Update renderApplications function to include pagination
-const originalRenderApplications = renderApplications;
-renderApplications = function(data) {
-    if (!data || data.length === 0) {
-        const tbody = document.getElementById("applicationsTableBody");
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucune candidature trouvée</td></tr>';
-        }
-        updatePagination(0);
-        return;
-    }
-    
-    // Apply pagination
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedData = data.slice(startIndex, endIndex);
-    
-    // Call original function with paginated data
-    originalRenderApplications(paginatedData);
-    
-    // Update pagination controls
-    updatePagination(data.length);
-};
-
-// Initialize pagination when applications are loaded
-const originalLoadApplications = loadApplications;
-loadApplications = function() {
-    try {
-        showLoadingState(true);
-        
-        // Load from localStorage
-        const localData = localStorage.getItem('jobApplications');
-        if (localData) {
-            try {
-                applicationsData = JSON.parse(localData).map(processApplicationData);
-                renderApplications(applicationsData);
-            } catch (e) {
-                console.error('Error parsing local data:', e);
-                showErrorState('Erreur de chargement des données locales');
-            }
-        } else {
-            showNoDataState();
-        }
-    } catch (error) {
-        console.error('Loading failed:', error);
-        showErrorState('Erreur de chargement');
-    } finally {
-        showLoadingState(false);
-    }
-    
-    return applicationsData;
-};
-
-// Initialize pagination when DOM is loaded
-document.addEventListener("DOMContentLoaded", function() {
-    // Show pagination immediately
-    updatePagination(0);
-    
-    // Initialize other components
-    initSearch();
-    initFilter();
-    
-    // Load applications from localStorage
-    loadApplications();
-    
-    // Check if there's a new application to add
-    checkForNewApplication();
-    
-    // Initialize automatic import system
-    initializeImportTracking();
-    startAutomaticImport();
-});
-// Open modal with candidate details
-function openCandidateModal(fullName, educationLevel) {
-  document.getElementById("modal-fullname").textContent = fullName;
-  document.getElementById("modal-education").textContent = educationLevel;
-  document.getElementById("viewMoreModal").style.display = "block";
-}// Close modal
-function closeModalviewmore(modalId) {
-  document.getElementById(modalId).style.display = "none";
-}
   </script>
 </body>
 </html>
