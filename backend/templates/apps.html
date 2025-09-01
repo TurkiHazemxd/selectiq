@@ -16,21 +16,6 @@
     #appNotification {
       animation: slideIn 0.3s ease;
     }
-    
-    /* Highlight for newly imported applications */
-    tr.auto-imported {
-      background-color: rgba(59, 130, 246, 0.1) !important;
-    }
-    
-    tr.auto-imported:hover {
-      background-color: rgba(59, 130, 246, 0.2) !important;
-    }
-    
-    .import-status {
-      font-size: 0.8em;
-      color: #10b981;
-      margin-left: 8px;
-    }
   </style>
 </head>
 <body>
@@ -68,8 +53,6 @@
         <select class="filter-select" id="statusFilter">
           <option value="">All Statuses</option>
           <option value="pending">Pending</option>
-          <option value="reviewed">Reviewed</option>
-          <option value="interview">Interview</option>
           <option value="rejected">Rejected</option>
           <option value="accepted">Accepted</option>
         </select>
@@ -131,28 +114,8 @@
           <span id="modal-fullname"></span>
         </div>
         <div class="modal-field">
-          <label>Email:</label>
-          <span id="modal-email"></span>
-        </div>
-        <div class="modal-field">
-          <label>Job Title:</label>
-          <span id="modal-jobtitle"></span>
-        </div>
-        <div class="modal-field">
           <label>Education level:</label>
           <span id="modal-education"></span>
-        </div>
-        <div class="modal-field">
-          <label>Application Date:</label>
-          <span id="modal-date"></span>
-        </div>
-        <div class="modal-field">
-          <label>Status:</label>
-          <span id="modal-status"></span>
-        </div>
-        <div class="modal-field">
-          <label>CV:</label>
-          <a href="#" id="modal-cvlink" target="_blank">View CV</a>
         </div>
       </div>
     </div>
@@ -265,17 +228,13 @@
       try {
         showLoadingState(true);
         
-        // Try to load from the database first
-        try {
-          applicationsData = await ApiService.getApplications();
-          console.log('Loaded applications from database:', applicationsData.length);
-          
-          
-        } catch (error) {
-          console.error('Error loading from database:', error);
-          // Fallback to Google Sheets if database is unavailable
-          
-        }
+        // Load from the database
+        applicationsData = await ApiService.getApplications();
+        console.log('Loaded applications from database:', applicationsData.length);
+        
+        filteredData = [...applicationsData];
+        renderApplications(filteredData);
+        
       } catch (error) {
         console.error('Error loading applications:', error);
         showErrorState('Failed to load applications. Please try again.');
@@ -283,8 +242,6 @@
         showLoadingState(false);
       }
     }
-
-    
 
     // Manual sync with database
     async function syncWithDatabase() {
@@ -356,7 +313,9 @@
               <div class="dropdown-content">
                 <a href="#" onclick="viewApplicationDetails(${app.id}); return false;">View Details</a>
                 <a href="${app.cv_url}" target="_blank">View CV</a>
-                <a href="#" onclick="updateApplicationStatus(${app.id}, 'interview'); return false;">Mark for Interview</a>
+                <a href="interview.html">Mark for Interview</a>
+                <a href="#" onclick="updateApplicationStatus(${app.id}, 'accepted'); return false;">Accepted</a>
+                <a href="#" onclick="updateApplicationStatus(${app.id}, 'rejected'); return false;">Rejected </a>
                 <a href="#" onclick="deleteApplication(${app.id}, '${app.full_name}'); return false;" style="color: #ef4444;">
                   <i class="fas fa-trash"></i> Delete
                 </a>
@@ -477,17 +436,10 @@
     // View application details
     async function viewApplicationDetails(appId) {
       try {
-        // In a real application, you would fetch the full application details from the API
         const app = applicationsData.find(a => a.id === appId);
         if (app) {
           document.getElementById('modal-fullname').textContent = app.full_name;
-          document.getElementById('modal-email').textContent = app.email;
-          document.getElementById('modal-jobtitle').textContent = app.job_title;
           document.getElementById('modal-education').textContent = app.education_level || 'Not specified';
-          document.getElementById('modal-date').textContent = formatDate(app.created_at);
-          document.getElementById('modal-status').textContent = getStatusText(app.status);
-          document.getElementById('modal-cvlink').href = app.cv_url || '#';
-          
           document.getElementById('viewMoreModal').style.display = 'block';
         }
       } catch (error) {
@@ -514,7 +466,7 @@
         }
         
         renderApplications(filteredData);
-        showNotification('Application status updated successfully!', 'success');
+        showNotification(`Application status updated to ${newStatus} successfully!`, 'success');
       } catch (error) {
         console.error('Error updating application status:', error);
         showNotification('Error updating application status', 'error');
