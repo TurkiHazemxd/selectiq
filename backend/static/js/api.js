@@ -87,7 +87,7 @@ static async deleteJobOffer(id) {
     }
 
     static async updateApplication(id, updates) {
-    return this.request(`/applications/${int(id)}`, {
+    return this.request(`/applications/${parseInt(id)}`, {
         method: 'PUT',
         body: updates
     });
