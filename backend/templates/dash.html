@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SELECTIQ Junior - Power BI Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/interview.css">
+<style>
+     :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --text: #f8fafc;
+            --bg: #1e293b;
+            --card-bg: #334155;
+            --border: #475569;
+            --tag-urgent: #ef4444;
+            --nav-bg: #1a202c;
+            --accent: #4895ef;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                linear-gradient(to bottom right, var(--bg), #0f172a),
+                url('https://images.unsplash.com/photo-1639762681057-408e52192e55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2232&q=80');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: multiply;
+            background-attachment: fixed;
+        }
+
+        nav {
+            background-color: var(--nav-bg);
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            height: 50px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        .brand i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .menu {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            color: var(--text);
+            text-decoration: none;
+            padding: 8px 12px;
+            font-size: 0.95em;
+            transition: color 0.3s;
+            opacity: 0.8;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            color: var(--primary);
+            opacity: 1;
+        }
+
+        .menu i {
+            margin-right: 6px;
+            font-size: 1em;
+        }
+
+        .profile-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: var(--bg);
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .profile-dropdown a {
+            color: var(--text);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .profile-dropdown a:hover {
+            background-color: var(--primary);
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .main-content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            color: white;
+            margin: 0;
+        }
+
+        .powerbi-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+        }
+
+        .powerbi-iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+            border-radius: 4px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 0.1rem;
+            background: var(--nav-bg);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .admin-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Profile Modal Specific */
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-pic-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+        }
+        
+        .profile-details h3 {
+            margin: 0 0 5px 0;
+        }
+        
+        .profile-details p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+        
+        .profile-modal {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); 
+            z-index: 9999; 
+            justify-content: center; 
+            align-items: center;
+        }
+        
+        .profile-modal > div {
+            background-color: var(--card-bg);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            position: relative;
+            border: 1px solid var(--border);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modals-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 5px;
+            margin-top: -21px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modals-header h2 {
+            color: var(--primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-modals {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .close-modals:hover {
+            opacity: 1;
+            color: var(--primary);
+        }
+        
+        .apply-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .apply-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 0 1rem;
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+            }
+
+            .menu {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+
+            .profile-container {
+                order: 2;
+                margin-left: auto;
+            }
+            
+            .powerbi-container {
+                padding: 10px;
+            }
+            
+            .powerbi-iframe {
+                height: 400px;
+            }
+        }
+</style>
+</head>
+<body>
+<nav>
+    <div class="brand">
+        <i class="fas fa-briefcase"></i>
+        <span>SELECTIQ Junior</span>
+    </div>
+    <div class="menu">
+        <a href="dashboard.html"><i class="fas fa-briefcase"></i> Offers</a>
+        <a href="apps.html"><i class="fas fa-file-alt"></i> Apps</a>
+        <a href="candidates.html"><i class="fas fa-users"></i> Candidats</a>
+        <a href="interview.html"><i class="fas fa-user-clock"></i> Interviews</a>
+        <a href="#" class="active"><i class="fas fa-chart-bar"></i> Dashboard</a>
+        <a href="#"><i class="fas fa-envelope"></i> Mail</a>
+    </div>
+
+    <div class="profile-container">
+        <button class="profile-btn" onclick="toggleProfileDropdown()">
+            <img src="../static/assets/icon.jpg" alt="Profile" class="profile-img">
+            <i class="fas fa-caret-down"></i>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+            <a href="#" onclick="openModal('profile-modal')"><i class="fas fa-user"></i> My Profile</a>
+            <a href="login.html"><i class="fas fa-sign-out-alt"></i> Disconnect</a>
+        </div>
+    </div>
+</nav>
+
+<div class="main-content">
+    <div class="page-header">
+        <h1 class="page-title">Power BI Dashboard</h1>
+    </div>
+    
+    <div>
+        <iframe class="powerbi-iframe" title="selectiq" src="https://app.powerbi.com/reportEmbed?reportId=54a31beb-f963-462c-9fa1-6fdfeca6ccd1&autoAuth=true&ctid=1ecd776d-d57f-4de0-a67a-eca9809e8d8d" frameborder="0" allowFullScreen="true"></iframe>
+    </div>
+</div>
+
+<footer style=" color: #e2e8f0; text-align: center; padding: 1rem; font-size: 0.9rem; border-top: 1px solid #475569;">
+  <p style="margin: 0;">
+    © 2025 <strong>SelectIQ Junior</strong> — All Rights Reserved 
+    <a href="login.html" class="admin-link" style="color: #93c5fd; text-decoration: none; margin-left: 8px;">
+      
+    </a>
+  </p>
+</footer>
+
+<!-- Profile Modal -->
+<div class="profile-modal" id="profile-modal">
+    <div>
+        <div class="modals-header">
+            <h2><i class="fas fa-user"></i> My Profile</h2>
+            <button class="close-modals" onclick="closeModals('profile-modal')">&times;</button>
+        </div>
+        <div class="profile-info">
+            <img src="../static/assets/icon.jpg" alt="Profile" class="profile-pic-large">
+            <div class="profile-details">
+                <h3>Admin User</h3>
+                <p><i class="fas fa-envelope"></i> selectiqad@gmail.com</p>
+                <p><i class="fas fa-user-tag"></i> Senior Administrator</p>
+                <p><i class="fas fa-calendar-alt"></i> Member since: 08/15/2025</p>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <button class="apply-btn" onclick="closeModals('profile-modal')">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Profile dropdown
+    function toggleProfileDropdown() {
+        document.getElementById('profileDropdown').classList.toggle('show');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.profile-btn') && !event.target.closest('.profile-dropdown')) {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    };
+    
+    // Function to open modal
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+        document.getElementById('profileDropdown').classList.remove('show');
+        return false;
+    }
+    
+    // Function to close modal
+    function closeModals(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        return false;
+    }
+</script>
+</body>
+</html>
